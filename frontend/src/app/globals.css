@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Дизайн-токени. Джерело правди — ../../../design/src/*.html
+   (напрямок IRON). Змінюючи щось тут, звіряйся з дизайном.
+   ============================================================ */
+
+/* Телефон на десктопі показуємо в рамці — але тільки якщо екран
+   реально великий і по висоті теж. Медіазапит із двома умовами
+   Tailwind сам не вміє, тому це власний варіант. */
+@custom-variant framed (@media (min-width: 640px) and (min-height: 800px));
+
+@theme {
+  /* --- поверхні --- */
+  --color-bg: #0a0a0b;
+  --color-surface: #141416;
+  --color-surface-2: #1c1c20;
+  --color-surface-3: #26262c; /* натиснутий стан степерів */
+  --color-line: #2a2a2f;
+  --color-desk: #131316; /* тло навколо рамки телефона на десктопі */
+
+  /* --- текст --- */
+  --color-text: #f4f4f5;
+  --color-dim: #9a9aa3;
+  --color-dim-2: #75757f;
+
+  /* --- акцент і сигнали --- */
+  --color-accent: #d8ff3e;
+  --color-accent-ink: #0a0a0b;
+  --color-warn: #ff9f45;
+  --color-danger: #ff6b5a;
+  --color-danger-soft: #ff8877;
+
+  /* --- радіуси за роллю, а не за розміром --- */
+  --radius-chip: 12px;
+  --radius-control: 14px; /* плитки, дрібні кнопки */
+  --radius-field: 16px; /* інпути, рядки списку */
+  --radius-card: 18px; /* картки, головні кнопки */
+  --radius-panel: 24px; /* великі панелі */
+  --radius-sheet: 28px; /* нижня шторка */
+  --radius-phone: 44px;
+
+  /* --- типографіка --- */
+  --text-micro: 10px;
+  --text-tag: 11px; /* верхній регістр + tracking-kicker */
+  --text-meta: 12.5px;
+  --text-label: 13px;
+  --text-body: 14.5px;
+  --text-body--line-height: 1.5;
+  --text-lead: 16px;
+  --text-dial: 58px; /* вага у залі — головне число екрана */
+  --text-dial--line-height: 1;
+  --text-dial-sm: 42px; /* повтори */
+  --text-dial-sm--line-height: 1;
+
+  --tracking-title: -0.02em;
+  --tracking-display: -0.03em;
+  --tracking-dial: -0.04em;
+  --tracking-kicker: 0.14em;
+  --tracking-label: 0.16em;
+
+  /* --- рух --- */
+  /* Свідомо перекриваємо дефолтні криві Tailwind: в цьому застосунку
+     ease-out означає саме цю криву, іншої бути не має. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* --- тіні --- */
+  --shadow-phone: 0 0 0 10px #202024, 0 0 0 11px #37373d,
+    0 40px 90px rgb(0 0 0 / 0.6);
+  --shadow-drag: 0 14px 30px rgb(0 0 0 / 0.55);
+}
+
+/* Шрифти підключає next/font у layout.tsx; тут лише зв'язуємо
+   його змінні з утилітами font-sans / font-display. */
+@theme inline {
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-unbounded), var(--font-onest), sans-serif;
+}
+
+@layer base {
+  html {
+    height: 100%;
+  }
+
+  body {
+    height: 100%;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Прокрутка всередині екранів є, смуга прокрутки — ні. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

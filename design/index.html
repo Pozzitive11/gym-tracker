@@ -1,0 +1,1452 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Трекер тренувань</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{
+  margin:0;
+  background:#0A0A0B;
+  font-family:"Onest",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow:hidden;
+}
+#app{position:fixed;inset:0;display:grid;place-items:center}
+.v{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  overflow:clip;          /* clip is unscrollable: a focus deep inside cannot pan the shell */
+  display:flex;
+  flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+/* On a desktop screen the app sits in a phone. On a phone it is the phone. */
+@media (min-width:640px) and (min-height:800px){
+  body{background:#131316}
+  #app{padding:20px}
+  .v{
+    width:390px;height:844px;
+    border-radius:44px;
+    box-shadow:0 0 0 10px #202024, 0 0 0 11px #37373d, 0 40px 90px rgba(0,0,0,.6);
+  }
+}
+</style>
+
+<style>
+/* ============================================================
+   VARIANT 1 - IRON   axis: tactile weight
+   Controls read as hardware. The number is the hero.
+   ============================================================ */
+.v-iron{
+  --bg:#0A0A0B; --surf:#141416; --surf2:#1C1C20; --line:#2A2A2F;
+  --text:#F4F4F5; --dim:#9A9AA3; --dim2:#75757F;
+  --acc:#D8FF3E; --acc-ink:#0A0A0B; --warn:#FF9F45;
+  background:var(--bg); color:var(--text);
+  font-family:"Onest",system-ui,sans-serif;
+}
+.v-iron .scr{display:none;flex:1;min-height:0;flex-direction:column}
+.v-iron .scr[data-on]{display:flex}
+.v-iron .top{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 18px) 20px 12px;display:flex;align-items:center;gap:12px}
+.v-iron .top h1{margin:0;font-family:"Unbounded",sans-serif;font-weight:700;font-size:19px;letter-spacing:-.02em}
+.v-iron .top .sub{color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
+.v-iron .body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 20px 24px}
+.v-iron .body::-webkit-scrollbar{display:none}
+
+.v-iron .icobtn{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border:0;border-radius:14px;background:var(--surf);color:var(--text);cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .icobtn:active{transform:scale(.94)}
+.v-iron .ghost{margin-left:auto;border:0;background:transparent;color:var(--dim);font:inherit;font-size:14px;font-weight:500;padding:8px 4px;cursor:pointer;transition:transform 140ms var(--ease-out),color 140ms ease}
+.v-iron .ghost:active{transform:scale(.96);color:var(--text)}
+
+/* home: plan card */
+.v-iron .plan{background:var(--surf);border-radius:24px;padding:22px 20px 20px;margin-top:4px}
+.v-iron .plan .kicker{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.v-iron .plan .day{font-family:"Unbounded",sans-serif;font-weight:800;font-size:34px;letter-spacing:-.03em;margin:10px 0 2px}
+.v-iron .plan .muscle{color:var(--dim);font-size:14px;margin-bottom:16px}
+.v-iron .plan .exlist{color:var(--dim);font-size:12.5px;line-height:1.65;margin-bottom:20px}
+.v-iron .start{width:100%;height:66px;border:0;border-radius:18px;background:var(--acc);color:var(--acc-ink);font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .start:active{transform:scale(.975)}
+
+/* home: week */
+.v-iron .week{display:flex;align-items:center;gap:12px;padding:22px 4px 20px;border-bottom:1px solid var(--line)}
+.v-iron .week .t{font-size:14px;color:var(--dim)}
+.v-iron .week .c{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.v-iron .bars{display:flex;gap:5px;margin-left:auto}
+.v-iron .bars i{width:16px;height:6px;border-radius:3px;background:var(--line)}
+.v-iron .bars i[data-done]{background:var(--acc)}
+
+/* home: programs */
+.v-iron .sect{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:22px 4px 10px}
+.v-iron .prog{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border:0;border-radius:18px;background:var(--surf);color:var(--text);font:inherit;margin-bottom:8px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .prog:active{transform:scale(.985)}
+.v-iron .prog .nm{display:block;font-weight:600;font-size:15px}
+.v-iron .prog .mt{display:block;color:var(--dim);font-size:12.5px;margin-top:3px}
+.v-iron .prog .tag{margin-left:auto;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--acc-ink);background:var(--acc);padding:5px 9px;border-radius:999px}
+.v-iron .prog[data-idle]{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.v-iron .addprog{width:100%;padding:16px;border:0;border-radius:18px;background:transparent;color:var(--dim);font:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:color 140ms ease}
+.v-iron .addprog:active{color:var(--text)}
+
+/* empty state */
+.v-iron [data-screen="empty"] .body{display:flex;flex-direction:column}
+.v-iron .empty{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 4px 60px}
+.v-iron .empty .glyph{width:64px;height:64px;border-radius:22px;background:var(--surf);display:grid;place-items:center;margin-bottom:24px;color:var(--acc)}
+.v-iron .empty h2{font-family:"Unbounded",sans-serif;font-weight:800;font-size:27px;line-height:1.2;letter-spacing:-.03em;margin:0 0 12px}
+.v-iron .empty p{color:var(--dim);font-size:14.5px;line-height:1.6;margin:0 0 28px;max-width:30ch}
+
+/* tabs */
+.v-iron .tabs{flex:0 0 auto;display:flex;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);border-top:1px solid var(--line);background:rgba(10,10,11,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.v-iron .tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0;border:0;background:transparent;color:var(--dim2);font:inherit;font-size:10.5px;font-weight:500;cursor:pointer;transition:color 140ms ease}
+.v-iron .tabs button[data-on]{color:var(--acc)}
+.v-iron .tabs button:active{transform:scale(.95)}
+
+/* workout */
+.v-iron .segs{display:flex;gap:4px;padding:0 20px 14px}
+.v-iron .segs i{flex:1;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-out)}
+.v-iron .segs i[data-done]{background:var(--dim2)}
+.v-iron .segs i[data-cur]{background:var(--acc)}
+.v-iron .offline{display:none;align-items:center;gap:9px;margin:0 20px 12px;padding:9px 14px;border-radius:12px;background:rgba(255,159,69,.12);color:var(--warn);font-size:12.5px;font-weight:500}
+.v-iron .offline[data-on]{display:flex}
+.v-iron .offline .dot{width:6px;height:6px;border-radius:3px;background:var(--warn);flex:0 0 auto}
+
+.v-iron .exrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:15px 16px;border:0;border-radius:16px;background:transparent;color:var(--text);font:inherit;cursor:pointer;transition:background 140ms ease,transform 140ms var(--ease-out)}
+.v-iron .exrow:active{transform:scale(.985)}
+.v-iron .exrow .nm{display:block;font-size:14.5px;font-weight:500}
+.v-iron .exrow .mt{margin-left:auto;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.v-iron .exrow[data-done] .nm{color:var(--dim2)}
+.v-iron .exrow[data-done] .mt{color:var(--acc)}
+
+/* the panel */
+.v-iron .panel{background:var(--surf);border-radius:24px;padding:20px;margin:6px 0 10px}
+.v-iron .panel .pname{font-family:"Unbounded",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;line-height:1.25}
+.v-iron .panel .swapped{display:none;margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.v-iron .panel[data-swapped] .swapped{display:block}
+.v-iron .panel .psub{color:var(--dim);font-size:13px;margin-top:5px;font-variant-numeric:tabular-nums}
+
+.v-iron .dial{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:20px}
+.v-iron .dial .val{flex:1;text-align:center;min-width:0}
+.v-iron .dial .val .n{font-family:"Unbounded",sans-serif;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;font-size:58px;line-height:1;display:block}
+.v-iron .dial .val .u{display:block;margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.v-iron .step{width:74px;height:74px;flex:0 0 auto;border:0;border-radius:20px;background:var(--surf2);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms var(--ease-out),background 120ms ease}
+.v-iron .step:active{transform:scale(.93);background:#26262c}
+.v-iron .dial.reps .val .n{font-size:42px}
+.v-iron .dial.reps .step{width:60px;height:60px;font-size:13px}
+
+.v-iron .commit{width:100%;height:72px;margin-top:20px;border:0;border-radius:20px;background:var(--acc);color:var(--acc-ink);font-family:"Unbounded",sans-serif;font-weight:800;font-size:16px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .commit:active{transform:scale(.975)}
+.v-iron .commit[data-hide]{display:none}
+
+/* rest timer takes the commit button's place */
+.v-iron .rest{display:none;position:relative;overflow:hidden;align-items:center;gap:14px;height:72px;margin-top:20px;padding:0 20px;border-radius:20px;background:var(--surf2)}
+.v-iron .rest[data-on]{display:flex}
+.v-iron .rest .fill{position:absolute;inset:0;transform-origin:left center;background:rgba(216,255,62,.15)}
+.v-iron .rest .lbl{position:relative;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.v-iron .rest .tm{position:relative;font-family:"Unbounded",sans-serif;font-weight:700;font-size:26px;font-variant-numeric:tabular-nums;color:var(--acc)}
+.v-iron .rest .skip{position:relative;margin-left:auto;border:0;background:transparent;color:var(--dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:10px 0}
+.v-iron .rest .skip:active{color:var(--text)}
+
+.v-iron .tiles{display:flex;gap:8px;margin-top:16px}
+.v-iron .tile{flex:1;height:52px;display:grid;place-items:center;border-radius:14px;background:var(--surf2);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.v-iron .tile[data-pending]{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--dim2)}
+.v-iron .tile[data-miss]{color:var(--warn);box-shadow:inset 0 0 0 1px rgba(255,159,69,.45);background:transparent}
+.v-iron .tile[data-fresh]{animation:ironTile 260ms var(--ease-out) both}
+@keyframes ironTile{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.v-iron .swaplink{width:100%;margin-top:14px;padding:10px;border:0;background:transparent;color:var(--dim);font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.v-iron .swaplink:active{color:var(--text)}
+
+/* summary */
+.v-iron .sum{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 22px 20px;overflow-y:auto}
+.v-iron .sum .badge{align-self:flex-start;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--acc-ink);background:var(--acc);padding:6px 12px;border-radius:999px}
+.v-iron .sum h2{font-family:"Unbounded",sans-serif;font-weight:800;font-size:30px;line-height:1.15;letter-spacing:-.035em;margin:18px 0 24px}
+.v-iron .sumgrid{display:flex;gap:10px}
+.v-iron .sumgrid div{flex:1;background:var(--surf);border-radius:18px;padding:16px 14px}
+.v-iron .sumgrid .n{font-family:"Unbounded",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .sumgrid .l{margin-top:6px;font-size:11px;color:var(--dim);font-weight:500}
+.v-iron .grow{display:flex;align-items:center;gap:9px;margin-top:12px;padding:14px 16px;border-radius:16px;background:rgba(216,255,62,.1);color:var(--acc);font-size:13.5px;font-weight:600}
+.v-iron .recs{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.v-iron .rec{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--surf)}
+.v-iron .rec .rl{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.v-iron .rec .rn{display:block;font-size:14px;font-weight:500;margin-top:3px}
+.v-iron .rec .rv{margin-left:auto;font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.v-iron .sum .done{width:100%;height:60px;margin-top:22px;border:0;border-radius:18px;background:var(--surf2);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .sum .done:active{transform:scale(.975)}
+.v-iron .rise{opacity:0;transform:translateY(14px);animation:ironRise 440ms var(--ease-out) forwards;animation-delay:var(--d,0ms)}
+@keyframes ironRise{to{opacity:1;transform:translateY(0)}}
+
+/* progress */
+.v-iron .stats{display:flex;padding:6px 0 20px;border-bottom:1px solid var(--line)}
+.v-iron .stats div{flex:1;min-width:0}
+.v-iron .stats div+div{padding-left:14px;border-left:1px solid var(--line)}
+.v-iron .stats .n{font-family:"Unbounded",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .stats .l{margin-top:5px;font-size:11px;color:var(--dim)}
+.v-iron .segd{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--surf);margin:18px 0}
+.v-iron .segd button{flex:1;height:36px;border:0;border-radius:11px;background:transparent;color:var(--dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:color 140ms ease,background 140ms ease}
+.v-iron .segd button[data-on]{background:var(--surf2);color:var(--text)}
+.v-iron .stall{display:flex;gap:12px;padding:16px;border-radius:18px;background:rgba(255,159,69,.1);box-shadow:inset 0 0 0 1px rgba(255,159,69,.22)}
+.v-iron .stall .st{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.v-iron .stall .sb{display:block;margin-top:6px;font-size:13.5px;line-height:1.5;color:var(--text)}
+.v-iron .exstat{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:15px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;cursor:pointer}
+.v-iron .exstat .nm{display:block;font-size:14px;font-weight:500}
+.v-iron .exstat .kg{display:block;font-size:12px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
+.v-iron .exstat .spark{margin-left:auto;flex:0 0 auto}
+.v-iron .exstat .pc{width:50px;text-align:right;font-size:13px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums}
+.v-iron .exstat .pc[data-flat]{color:var(--dim2)}
+.v-iron .hrow{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line)}
+.v-iron .hrow .d{font-size:13.5px;font-weight:500}
+.v-iron .hrow .dd{font-size:12px;color:var(--dim);margin-top:3px}
+.v-iron .hrow .r{margin-left:auto;text-align:right;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* swap sheet */
+.v-iron .scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity 260ms var(--ease-out)}
+.v-iron .sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surf);border-radius:28px 28px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform 340ms var(--ease-drawer)}
+.v-iron[data-sheet] .scrim{opacity:1;pointer-events:auto}
+.v-iron[data-sheet] .sheet{transform:translateY(0)}
+.v-iron .sheet h3{font-family:"Unbounded",sans-serif;font-weight:700;font-size:18px;margin:0 0 4px}
+.v-iron .sheet p{color:var(--dim);font-size:13px;margin:0 0 18px;line-height:1.5}
+.v-iron .sheet input{width:100%;height:56px;padding:0 16px;border:0;border-radius:16px;background:var(--surf2);color:var(--text);font:inherit;font-size:16px;outline:none;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow 140ms ease}
+.v-iron .sheet input:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+.v-iron .sheet input::placeholder{color:var(--dim2)}
+.v-iron .chiplbl{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim2);margin:18px 0 10px}
+.v-iron .chips{display:flex;flex-wrap:wrap;gap:8px}
+.v-iron .chips button{padding:11px 14px;border:0;border-radius:999px;background:var(--surf2);color:var(--text);font:inherit;font-size:13px;cursor:pointer;transition:transform 120ms var(--ease-out)}
+.v-iron .chips button:active{transform:scale(.95)}
+.v-iron .sheet .apply{width:100%;height:60px;margin-top:20px;border:0;border-radius:18px;background:var(--acc);color:var(--acc-ink);font-family:"Unbounded",sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .sheet .apply:active{transform:scale(.975)}
+
+@media (hover:hover) and (pointer:fine){
+  .v-iron .exrow:hover{background:var(--surf)}
+  .v-iron .step:hover{background:#26262c}
+}
+@media (prefers-reduced-motion: reduce){
+  .v-iron .rise{animation:ironFade 200ms ease forwards}
+  .v-iron .tile[data-fresh]{animation:ironFade 200ms ease both}
+  .v-iron .sheet{transition:opacity 200ms ease;transform:none;opacity:0}
+  .v-iron[data-sheet] .sheet{opacity:1}
+}
+@keyframes ironFade{from{opacity:0}to{opacity:1;transform:none}}
+</style>
+
+<style>
+/* ============================================================
+   IRON - screens added after the direction was picked:
+   program, program day, exercise detail, past workout
+   ============================================================ */
+
+/* generic navigable row with a chevron */
+.v-iron .navrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border:0;border-radius:18px;background:var(--surf);color:var(--text);font:inherit;margin-bottom:8px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .navrow:active{transform:scale(.985)}
+.v-iron .navrow .nm{display:block;font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em}
+.v-iron .navrow .mt{display:block;color:var(--dim);font-size:12.5px;margin-top:5px}
+.v-iron .navrow .chev{margin-left:auto;flex:0 0 auto;color:var(--dim2)}
+
+/* action list (make active / rename / delete) */
+.v-iron .actions{margin-top:8px;border-radius:18px;background:var(--surf);overflow:hidden}
+.v-iron .actions button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:16px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;transition:background 140ms ease}
+.v-iron .actions button:last-child{border-bottom:0}
+.v-iron .actions button:active{background:var(--surf2)}
+.v-iron .actions button[data-danger]{color:#FF6B5A}
+.v-iron .actions svg{flex:0 0 auto;color:var(--dim)}
+.v-iron .actions button[data-danger] svg{color:#FF6B5A}
+
+/* --- program day editor: the one screen with real number entry --- */
+.v-iron .dayex{position:relative;display:flex;align-items:center;gap:10px;padding:14px 14px 14px 8px;border-radius:18px;background:var(--surf);margin-bottom:8px}
+.v-iron .dayex[data-drag]{z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.55);background:var(--surf2)}
+.v-iron .dayex[data-shift]{transition:transform 220ms var(--ease-out)}
+.v-iron .grip{width:36px;height:44px;flex:0 0 auto;display:grid;place-items:center;color:var(--dim2);cursor:grab;touch-action:none}
+.v-iron .grip:active{cursor:grabbing}
+.v-iron .dayex .info{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:var(--text);font:inherit;padding:0;cursor:pointer}
+.v-iron .dayex .nm{display:block;font-size:14.5px;font-weight:500;line-height:1.3}
+.v-iron .dayex .mt{display:block;margin-top:5px;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.v-iron .dayex .kill{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--dim2);cursor:pointer;transition:color 140ms ease}
+.v-iron .dayex .kill:active{color:#FF6B5A}
+
+.v-iron .editor{display:none;gap:8px;margin:0 0 8px;padding:16px;border-radius:18px;background:var(--surf2)}
+.v-iron .editor[data-open]{display:flex}
+.v-iron .numfield{flex:1;min-width:0}
+.v-iron .numfield label{display:block;margin-bottom:8px;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.v-iron .numfield input{width:100%;height:56px;padding:0 12px;border:0;border-radius:14px;background:var(--bg);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;text-align:center;outline:none;box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow 140ms ease;-moz-appearance:textfield}
+.v-iron .numfield input::-webkit-outer-spin-button,
+.v-iron .numfield input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.v-iron .numfield input:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+
+.v-iron .stickybar{flex:0 0 auto;padding:12px 20px calc(env(safe-area-inset-bottom) + 14px);border-top:1px solid var(--line);background:rgba(10,10,11,.9);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+
+/* --- charts --- */
+.v-iron .chart{margin-top:14px;padding:18px 16px 12px;border-radius:20px;background:var(--surf)}
+.v-iron .chart .ct{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.v-iron .chart .ct .h{font-size:12.5px;font-weight:600;color:var(--dim)}
+.v-iron .chart .ct .now{margin-left:auto;font-family:"Unbounded",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .chart .ct .delta{font-size:12.5px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums}
+.v-iron .chart svg{display:block;width:100%;overflow:visible}
+.v-iron .chart .grid{stroke:var(--line);stroke-width:1}
+.v-iron .chart .line{fill:none;stroke:var(--acc);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.v-iron .chart .area{fill:rgba(216,255,62,.08)}
+.v-iron .chart .dot{fill:var(--acc)}
+.v-iron .chart .bar{fill:var(--surf2)}
+.v-iron .chart .bar.hi{fill:var(--acc)}
+.v-iron .chart .ax{fill:var(--dim2);font-family:"Onest",sans-serif;font-size:10px}
+.v-iron .chart .vlab{fill:var(--dim);font-family:"Onest",sans-serif;font-size:10px;font-variant-numeric:tabular-nums}
+.v-iron .chart .xrow{display:flex;justify-content:space-between;margin-top:10px;font-size:10.5px;color:var(--dim2)}
+
+.v-iron .kpis{display:flex;gap:10px;margin-top:14px}
+.v-iron .kpis div{flex:1;padding:16px 14px;border-radius:18px;background:var(--surf)}
+.v-iron .kpis .n{font-family:"Unbounded",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .kpis .l{margin-top:6px;font-size:11px;color:var(--dim)}
+
+/* --- set history grouped by date --- */
+.v-iron .dategroup{padding:16px 0 14px;border-bottom:1px solid var(--line)}
+.v-iron .dategroup .dh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.v-iron .dategroup .dh .d{font-size:13.5px;font-weight:600}
+.v-iron .dategroup .dh .vol{margin-left:auto;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* set chips: hitting the target and missing it must look different */
+.v-iron .setline{display:flex;flex-wrap:wrap;gap:6px}
+.v-iron .setchip{padding:9px 12px;border-radius:12px;background:var(--surf2);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.v-iron .setchip[data-miss]{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,159,69,.45);color:var(--warn)}
+.v-iron .setchip[data-pr]{background:var(--acc);color:var(--acc-ink)}
+
+/* --- past workout --- */
+.v-iron .hero{padding:18px 20px 20px;border-radius:24px;background:var(--surf);margin-top:4px}
+.v-iron .hero .d{font-family:"Unbounded",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.03em}
+.v-iron .hero .dd{color:var(--dim);font-size:13.5px;margin-top:6px}
+.v-iron .hero .row{display:flex;gap:10px;margin-top:18px}
+.v-iron .hero .row div{flex:1}
+.v-iron .hero .row .n{font-family:"Unbounded",sans-serif;font-weight:700;font-size:18px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .hero .row .l{margin-top:5px;font-size:11px;color:var(--dim)}
+.v-iron .hero .cmp{display:flex;align-items:center;gap:8px;margin-top:16px;padding:12px 14px;border-radius:14px;background:rgba(216,255,62,.1);color:var(--acc);font-size:13px;font-weight:600}
+
+.v-iron .pastex{padding:18px 0;border-bottom:1px solid var(--line)}
+.v-iron .pastex .ph{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.v-iron .pastex .nm{font-size:15px;font-weight:600}
+.v-iron .subnote{display:block;margin-top:5px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.v-iron .pastex .tot{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.v-iron .pastex .up{color:var(--acc);font-weight:600}
+.v-iron .legend{display:flex;gap:16px;padding:14px 0 4px;font-size:11.5px;color:var(--dim)}
+.v-iron .legend span{display:flex;align-items:center;gap:7px}
+.v-iron .legend i{width:14px;height:14px;border-radius:5px;background:var(--surf2)}
+.v-iron .legend i[data-miss]{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,159,69,.45)}
+.v-iron .readonly{padding:18px 0 4px;font-size:12.5px;color:var(--dim2);line-height:1.6}
+
+/* --- catalog --- */
+.v-iron .search{width:100%;height:52px;padding:0 16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;font-size:15px;outline:none;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow 140ms ease}
+.v-iron .search:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+.v-iron .search::placeholder{color:var(--dim2)}
+.v-iron .filters{display:flex;gap:8px;overflow-x:auto;padding:14px 0 6px;scrollbar-width:none}
+.v-iron .filters::-webkit-scrollbar{display:none}
+.v-iron .filters button{flex:0 0 auto;padding:10px 14px;border:0;border-radius:999px;background:var(--surf);color:var(--dim);font:inherit;font-size:13px;cursor:pointer;transition:background 140ms ease,color 140ms ease}
+.v-iron .filters button[data-on]{background:var(--acc);color:var(--acc-ink);font-weight:600}
+.v-iron .catname{display:flex;align-items:center}
+.v-iron .mine{margin-left:8px;flex:0 0 auto;padding:3px 7px;border-radius:6px;background:rgba(216,255,62,.14);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+.v-iron .nores{padding:34px 4px;color:var(--dim);font-size:14px;line-height:1.6}
+
+@media (hover:hover) and (pointer:fine){
+  .v-iron .navrow:hover{background:var(--surf2)}
+  .v-iron .actions button:hover{background:var(--surf2)}
+}
+</style>
+
+<style>
+/* ============================================================
+   IRON - configuration form: new / edit program
+   Calm mode: sitting at home. Denser than the gym screens,
+   but every hit target still clears 48px.
+   ============================================================ */
+.v-iron .field{margin-top:6px;margin-bottom:18px}
+.v-iron .field label{display:block;margin-bottom:9px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.v-iron .field input[type="text"]{width:100%;height:58px;padding:0 16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;font-size:16px;font-weight:500;outline:none;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow 140ms ease}
+.v-iron .field input[type="text"]:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+.v-iron .field input[type="text"]::placeholder{color:var(--dim2)}
+.v-iron .hint{margin-top:9px;font-size:12.5px;line-height:1.55;color:var(--dim)}
+
+/* rest-between-sets stepper, mirrors the gym control so the mapping is obvious */
+.v-iron .restpick{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:var(--surf)}
+.v-iron .restpick button{width:56px;height:56px;flex:0 0 auto;border:0;border-radius:14px;background:var(--surf2);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform 120ms var(--ease-out),background 120ms ease}
+.v-iron .restpick button:active{transform:scale(.93);background:#26262c}
+.v-iron .restpick .cur{flex:1;text-align:center}
+.v-iron .restpick .cur .n{display:block;font-family:"Unbounded",sans-serif;font-weight:800;font-size:28px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .restpick .cur .u{display:block;margin-top:4px;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+/* switch */
+.v-iron .switchrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;cursor:pointer;transition:background 140ms ease}
+.v-iron .switchrow .t{display:block;font-size:14.5px;font-weight:500}
+.v-iron .switchrow .s{display:block;margin-top:4px;font-size:12.5px;color:var(--dim);line-height:1.5}
+.v-iron .switchrow .sw{margin-left:auto;flex:0 0 auto;position:relative;width:52px;height:32px;border-radius:999px;background:var(--surf2);transition:background 180ms var(--ease-out)}
+.v-iron .switchrow .sw::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:999px;background:var(--dim);transition:transform 180ms var(--ease-out),background 180ms var(--ease-out)}
+.v-iron .switchrow[data-on] .sw{background:var(--acc)}
+.v-iron .switchrow[data-on] .sw::after{transform:translateX(20px);background:var(--acc-ink)}
+
+/* day slots being configured */
+.v-iron .slot{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;margin-bottom:8px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .slot:active{transform:scale(.985)}
+.v-iron .slot .k{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:11px;background:var(--surf2);font-family:"Unbounded",sans-serif;font-weight:700;font-size:13px;color:var(--acc)}
+.v-iron .slot .nm{display:block;font-size:14.5px;font-weight:500}
+.v-iron .slot .mt{display:block;margin-top:4px;font-size:12.5px;color:var(--dim)}
+.v-iron .slot .mt[data-empty]{color:var(--warn)}
+.v-iron .slot .chev{margin-left:auto;flex:0 0 auto;color:var(--dim2)}
+
+.v-iron .formsect{padding:22px 4px 12px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.v-iron .formsect:first-child{padding-top:6px}
+.v-iron .err{display:none;margin-bottom:14px;padding:13px 15px;border-radius:14px;background:rgba(255,107,90,.1);box-shadow:inset 0 0 0 1px rgba(255,107,90,.28);color:#FF8877;font-size:13px;line-height:1.5}
+.v-iron .err[data-on]{display:block}
+.v-iron .start[disabled]{opacity:.4;pointer-events:none}
+
+@media (hover:hover) and (pointer:fine){
+  .v-iron .slot:hover{background:var(--surf2)}
+  .v-iron .switchrow:hover{background:var(--surf2)}
+}
+@media (prefers-reduced-motion: reduce){
+  .v-iron .switchrow .sw,.v-iron .switchrow .sw::after{transition:background 160ms ease}
+}
+</style>
+
+<div id="app"><div class="v v-iron">
+
+  <!-- ==================== 1. ГОЛОВНА ==================== -->
+  <section class="scr" data-screen="home" data-on>
+    <header class="top">
+      <div>
+        <h1>Верх / Низ 4&times;</h1>
+        <div class="sub">середа, 6 вересня</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="plan">
+        <div class="kicker">наступне за планом</div>
+        <div class="day">День A</div>
+        <div class="muscle">Груди, плечі, трицепс</div>
+        <div class="exlist">Жим лежачи, Жим гантелей під кутом, Розводка в кросовері, Жим стоячи, Махи в сторони, Французький жим</div>
+        <button class="start" data-go="workout">Почати тренування</button>
+      </div>
+
+      <div class="week">
+        <span class="t">Цей тиждень</span>
+        <span class="bars"><i data-done></i><i data-done></i><i></i><i></i></span>
+        <span class="c">2 з 4</span>
+      </div>
+
+      <div class="sect">Програми</div>
+      <button class="prog" data-go="program">
+        <span><span class="nm">Верх / Низ 4&times;</span><span class="mt">3 дні &middot; 18 вправ</span></span>
+        <span class="tag">активна</span>
+      </button>
+      <button class="prog" data-idle data-go="program">
+        <span><span class="nm">Силовий блок 5&times;5</span><span class="mt">3 дні &middot; 9 вправ</span></span>
+      </button>
+      <button class="prog" data-idle data-go="program">
+        <span><span class="nm">Домашній мінімум</span><span class="mt">2 дні &middot; 11 вправ</span></span>
+      </button>
+      <button class="addprog" data-go="newprogram">+ Нова програма</button>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== СТАН: ПОРОЖНЬО ==================== -->
+  <section class="scr" data-screen="empty">
+    <header class="top"><h1>Тренування</h1></header>
+    <div class="body">
+      <div class="empty">
+        <div class="glyph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6M20 9v6M7 6v12M17 6v12M7 12h10"/></svg></div>
+        <h2>Тут поки порожньо</h2>
+        <p>Склади програму вдома, і в залі залишиться тільки тиснути кнопки. Це займе кілька хвилин.</p>
+        <button class="start" data-go="newprogram">Створити програму</button>
+      </div>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== 2. ПРОГРАМА ==================== -->
+  <section class="scr" data-screen="program">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>Верх / Низ 4&times;</h1>
+        <div class="sub">3 дні &middot; 18 вправ</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="sect">Дні</div>
+      <button class="navrow" data-go="day">
+        <span><span class="nm">День A</span><span class="mt">Груди, плечі, трицепс &middot; 6 вправ</span></span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+      <button class="navrow" data-go="day">
+        <span><span class="nm">День B</span><span class="mt">Спина, біцепс &middot; 6 вправ</span></span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+      <button class="navrow" data-go="day">
+        <span><span class="nm">День C</span><span class="mt">Ноги, кор &middot; 6 вправ</span></span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+
+      <div class="sect">Програма</div>
+      <div class="actions">
+        <button>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Зробити активною
+        </button>
+        <button>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M14 6l4 4"/></svg>
+          Перейменувати
+        </button>
+        <button data-danger>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+          Видалити програму
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== КОНФІГУРАЦІЯ: НОВА ПРОГРАМА ==================== -->
+  <section class="scr" data-screen="newprogram">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>Нова програма</h1>
+        <div class="sub">Налаштуй один раз, далі тільки тренуйся</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="err" data-form-err></div>
+
+      <div class="field">
+        <label for="np-name">Назва</label>
+        <input id="np-name" type="text" data-form="name" placeholder="Наприклад: Верх / Низ 4&times;" autocomplete="off">
+      </div>
+
+      <div class="formsect">Скільки днів у циклі</div>
+      <div class="segd" data-daycount>
+        <button data-days="2">2</button>
+        <button data-days="3" data-on>3</button>
+        <button data-days="4">4</button>
+        <button data-days="5">5</button>
+      </div>
+      <div class="hint">День це один похід у зал. Порядок вільний: застосунок просто пропонує наступний за списком.</div>
+
+      <div class="formsect">Дні</div>
+      <div data-slots></div>
+
+      <div class="formsect">Відпочинок між підходами</div>
+      <div class="restpick">
+        <button data-rest-step="-15" aria-label="Менше відпочинку">&minus;15</button>
+        <span class="cur"><span class="n" data-form="rest">2:00</span><span class="u">за замовчуванням</span></span>
+        <button data-rest-step="15" aria-label="Більше відпочинку">+15</button>
+      </div>
+      <div class="hint">Таймер стартує сам після кожного підходу. Для окремої вправи це значення можна перебити в редакторі дня.</div>
+
+      <div class="formsect">Ще</div>
+      <button class="switchrow" data-toggle="active" data-on>
+        <span><span class="t">Зробити активною</span><span class="s">Ця програма буде на головній і в кнопці старту</span></span>
+        <span class="sw"></span>
+      </button>
+      <button class="switchrow" data-toggle="autofill" data-on style="margin-top:8px">
+        <span><span class="t">Підставляти минулу вагу</span><span class="s">Вага й повтори з попереднього тренування вже стоять у полях</span></span>
+        <span class="sw"></span>
+      </button>
+    </div>
+    <div class="stickybar">
+      <button class="start" data-act="save-program">Зберегти програму</button>
+    </div>
+  </section>
+
+  <!-- ==================== 3. ДЕНЬ ПРОГРАМИ ==================== -->
+  <section class="scr" data-screen="day">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>День A</h1>
+        <div class="sub">Груди, плечі, трицепс</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="sect">Вправи по порядку</div>
+      <div data-day-list></div>
+      <button class="addprog" data-go="catalog">+ Додати вправу</button>
+    </div>
+    <div class="stickybar">
+      <button class="start" data-go="workout">Почати тренування</button>
+    </div>
+  </section>
+
+  <!-- ==================== 4. ТРЕНУВАННЯ ==================== -->
+  <section class="scr" data-screen="workout">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>День A</h1>
+        <div class="sub" data-f="elapsed">12:50</div>
+      </div>
+      <button class="ghost" data-go="summary">Завершити</button>
+    </header>
+    <div class="segs" data-segs></div>
+    <div class="offline" data-offline><span class="dot"></span><span data-f="offline-text"></span></div>
+    <div class="body">
+      <div data-ex-list>
+        <div class="panel" data-panel>
+          <div class="pname" data-f="name">Жим лежачи</div>
+          <div class="swapped" data-f="swapped"></div>
+          <div class="psub"><span data-f="setno">Підхід 2 з 4</span> &middot; ціль <span data-f="target">8 повторень</span></div>
+
+          <div class="dial">
+            <button class="step" data-act="w-" aria-label="Менше ваги"><span data-f="stepdown">&minus;2.5</span></button>
+            <span class="val"><span class="n" data-f="weight">82.5</span><span class="u">кг</span></span>
+            <button class="step" data-act="w+" aria-label="Більше ваги"><span data-f="stepup">+2.5</span></button>
+          </div>
+
+          <div class="dial reps">
+            <button class="step" data-act="r-" aria-label="Менше повторень">&minus;1</button>
+            <span class="val"><span class="n" data-f="reps">8</span><span class="u">повторень</span></span>
+            <button class="step" data-act="r+" aria-label="Більше повторень">+1</button>
+          </div>
+
+          <button class="commit" data-commit data-act="commit">Підхід зроблено</button>
+          <div class="rest" data-rest>
+            <span class="fill" data-rest-fill></span>
+            <span class="lbl">відпочинок</span>
+            <span class="tm" data-f="rest-time">2:00</span>
+            <button class="skip" data-act="skip">Пропустити</button>
+          </div>
+
+          <div class="tiles" data-tiles></div>
+          <button class="swaplink" data-act="swap">Замінити вправу</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 5. ПІДСУМОК ==================== -->
+  <section class="scr" data-screen="summary">
+    <div class="sum">
+      <span class="badge rise" style="--d:0ms">День A закрито</span>
+      <h2 class="rise" style="--d:60ms">Гарна робота.<br>Обʼєм виріс.</h2>
+      <div class="sumgrid rise" style="--d:120ms">
+        <div><div class="n" data-f="s-vol">0</div><div class="l">кг обʼєму</div></div>
+        <div><div class="n" data-f="s-time">1:04</div><div class="l">під штангою</div></div>
+        <div><div class="n" data-f="s-sets">0</div><div class="l">підходів</div></div>
+      </div>
+      <div class="grow rise" style="--d:180ms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 4 7-7"/><path d="M15 8h5v5"/></svg>
+        <span>+4.9% до обʼєму проти минулого разу</span>
+      </div>
+      <div class="recs">
+        <div class="rec rise" style="--d:240ms">
+          <span><span class="rl">новий рекорд</span><span class="rn">Жим лежачи</span></span>
+          <span class="rv">85 &times; 8</span>
+        </div>
+        <div class="rec rise" style="--d:300ms">
+          <span><span class="rl">новий рекорд</span><span class="rn">Махи в сторони</span></span>
+          <span class="rv">12 &times; 15</span>
+        </div>
+      </div>
+      <button class="done rise" style="--d:360ms" data-go="home">На головну</button>
+    </div>
+  </section>
+
+  <!-- ==================== 6. ПРОГРЕС (+ 8. ІСТОРІЯ) ==================== -->
+  <section class="scr" data-screen="progress">
+    <header class="top"><h1>Прогрес</h1></header>
+    <div class="body">
+      <div class="stats">
+        <div><div class="n" data-f="p-sessions">11</div><div class="l">тренувань</div></div>
+        <div><div class="n" data-f="p-volume">84 320</div><div class="l">кг обʼєму</div></div>
+        <div><div class="n" data-f="p-records">3</div><div class="l">рекордів</div></div>
+      </div>
+
+      <div class="segd" data-periods>
+        <button data-period="m" data-on>Місяць</button>
+        <button data-period="q">3 місяці</button>
+        <button data-period="y">Рік</button>
+      </div>
+
+      <div class="stall">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto;color:var(--warn);margin-top:2px"><path d="M12 8v5M12 17h.01"/><path d="M12 3l9 16H3z"/></svg>
+        <span>
+          <span class="st">Застій</span>
+          <span class="sb">Жим стоячи. Робоча вага 47.5 кг не росте пʼятий тиждень. Спробуй скинути 10% і зайти знову.</span>
+        </span>
+      </div>
+
+      <div class="sect">Вправи</div>
+      <div data-exstats></div>
+
+      <div class="sect">Історія</div>
+      <div data-history></div>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== 7. ВПРАВА ДЕТАЛЬНО ==================== -->
+  <section class="scr" data-screen="exdetail">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1 data-f="xd-name">Жим лежачи</h1>
+        <div class="sub" data-f="xd-meta">Груди &middot; штанга</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="kpis">
+        <div><div class="n" data-f="xd-pr">85 &times; 8</div><div class="l">рекорд</div></div>
+        <div><div class="n" data-f="xd-1rm">107.7</div><div class="l">розрахунковий 1RM, кг</div></div>
+      </div>
+      <div class="chart" data-chart-weight></div>
+      <div class="chart" data-chart-volume></div>
+      <div class="sect">Усі підходи</div>
+      <div data-setlog></div>
+    </div>
+  </section>
+
+  <!-- ==================== 9. МИНУЛЕ ТРЕНУВАННЯ ==================== -->
+  <section class="scr" data-screen="past">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>Тренування</h1>
+        <div class="sub" data-f="pw-date">4 вересня</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="hero">
+        <div class="d" data-f="pw-day">День A</div>
+        <div class="dd" data-f="pw-sub">4 вересня, середа</div>
+        <div class="row">
+          <div><div class="n" data-f="pw-time">1:04</div><div class="l">тривалість</div></div>
+          <div><div class="n" data-f="pw-vol">6 617</div><div class="l">кг обʼєму</div></div>
+          <div><div class="n" data-f="pw-sets">20</div><div class="l">підходів</div></div>
+        </div>
+        <div class="cmp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 4 7-7"/><path d="M15 8h5v5"/></svg>
+          <span data-f="pw-cmp">+6.0% проти минулого Дня A</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i></i>ціль закрита</span>
+        <span><i data-miss></i>завалено</span>
+      </div>
+
+      <div data-pastlist></div>
+      <div class="readonly">Минулі тренування доступні тільки для читання.</div>
+    </div>
+  </section>
+
+  <!-- ==================== 10. КАТАЛОГ ВПРАВ ==================== -->
+  <section class="scr" data-screen="catalog">
+    <header class="top"><h1>Вправи</h1></header>
+    <div class="body">
+      <input class="search" type="search" placeholder="Пошук вправи" autocomplete="off" data-search>
+      <div class="filters" data-filters></div>
+      <div data-catlist></div>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== ЗАМІНА ВПРАВИ ==================== -->
+  <div class="scrim" data-act="close-sheet"></div>
+  <div class="sheet">
+    <h3>Замінити вправу</h3>
+    <p>Тренажер зайнятий? Впиши, на що міняєш. Діє тільки на це тренування і позначиться в історії.</p>
+    <input type="text" data-sheet-input placeholder="Назва вправи" autocomplete="off">
+    <div class="chiplbl">Нещодавно вписані</div>
+    <div class="chips" data-chips></div>
+    <button class="apply" data-act="apply-swap">Замінити</button>
+  </div>
+
+</div></div>
+
+<script>
+/* ============================================================
+   Трекер тренувань - прототип напрямку IRON
+   Mock data. Every number below is invented for the prototype.
+   ============================================================ */
+
+const PLAN = [
+  {name:'Жим лежачи',              sets:4, reps:8,  step:2.5, w:82.5},
+  {name:'Жим гантелей під кутом',  sets:3, reps:10, step:2,   w:30},
+  {name:'Розводка в кросовері',    sets:3, reps:12, step:2.5, w:17.5},
+  {name:'Жим стоячи',              sets:4, reps:6,  step:2.5, w:47.5},
+  {name:'Махи в сторони',          sets:3, reps:15, step:1,   w:12},
+  {name:'Французький жим',         sets:3, reps:10, step:2.5, w:27.5}
+];
+const RECENT  = ['Жим у Сміті','Жим гантелей лежачи','Хаммер на груди','Віджимання на брусах'];
+const PERIOD  = {
+  m:{s:'11',  v:'84 320',  r:'3'},
+  q:{s:'32',  v:'246 180', r:'9'},
+  y:{s:'118', v:'902 640', r:'27'}
+};
+const EXSTATS = [
+  {n:'Жим лежачи',           w:82.5, p:{m:6.1, q:14.3, y:38.5}, seed:7,  pr:[85,8]},
+  {n:'Присід зі штангою',    w:105,  p:{m:8.8, q:18.2, y:44.6}, seed:19, pr:[110,6]},
+  {n:'Тяга штанги в нахилі', w:77.5, p:{m:3.4, q:9.6,  y:27.9}, seed:31, pr:[80,8]},
+  {n:'Румунська тяга',       w:90,   p:{m:4.7, q:11.4, y:31.2}, seed:53, pr:[95,8]},
+  {n:'Жим стоячи',           w:47.5, p:{m:0,   q:1.1,  y:6.3},  seed:71, pr:[50,6]}
+];
+const HISTORY = [
+  {d:'4 вересня', day:'День A', t:'1:04', v:'6 617 кг'},
+  {d:'2 вересня', day:'День C', t:'1:12', v:'9 180 кг'},
+  {d:'31 серпня', day:'День B', t:'0:58', v:'7 420 кг'},
+  {d:'29 серпня', day:'День A', t:'1:06', v:'6 240 кг'},
+  {d:'27 серпня', day:'День C', t:'1:15', v:'9 040 кг'}
+];
+const CATALOG = [
+  {n:'Жим лежачи',             g:'Груди', e:'Штанга'},
+  {n:'Жим гантелей під кутом', g:'Груди', e:'Гантелі'},
+  {n:'Розводка в кросовері',   g:'Груди', e:'Блок'},
+  {n:'Віджимання на брусах',   g:'Груди', e:'Вага тіла'},
+  {n:'Хаммер на груди',        g:'Груди', e:'Тренажер', mine:true},
+  {n:'Жим у Сміті',            g:'Груди', e:'Тренажер', mine:true},
+  {n:'Жим стоячи',             g:'Плечі', e:'Штанга'},
+  {n:'Махи в сторони',         g:'Плечі', e:'Гантелі'},
+  {n:'Тяга штанги в нахилі',   g:'Спина', e:'Штанга'},
+  {n:'Підтягування',           g:'Спина', e:'Вага тіла'},
+  {n:'Тяга верхнього блока',   g:'Спина', e:'Блок'},
+  {n:'Присід зі штангою',      g:'Ноги',  e:'Штанга'},
+  {n:'Румунська тяга',         g:'Ноги',  e:'Штанга'},
+  {n:'Випади з гантелями',     g:'Ноги',  e:'Гантелі'},
+  {n:'Французький жим',        g:'Руки',  e:'Штанга'},
+  {n:'Згинання на біцепс',     g:'Руки',  e:'Гантелі'}
+];
+const GROUPS = ['Усі','Груди','Спина','Плечі','Ноги','Руки'];
+const TABS = [
+  {k:'workout',   label:'Тренування', screen:'home',     d:'M4 9v6M20 9v6M7 6v12M17 6v12M7 12h10'},
+  {k:'progress',  label:'Прогрес',    screen:'progress', d:'M4 19V9M10 19V5M16 19v-7M22 19h-20'},
+  {k:'exercises', label:'Вправи',     screen:'catalog',  d:'M4 7h16M4 12h16M4 17h10'}
+];
+/* 4 вересня, День A. Hand-authored: this screen is about the detail. */
+const PAST = {
+  date:'4 вересня', day:'День A', sub:'4 вересня, середа',
+  time:'1:04', vol:'6 617', sets:20, cmp:'+6.0% проти минулого Дня A',
+  ex:[
+    {n:'Жим лежачи',           target:8,  sets:[[82.5,8],[82.5,8],[85,8],[85,6]], vol:2510, up:'+2.5 кг', pr:2},
+    {n:'Хаммер на груди',      target:10, sets:[[40,10],[40,10],[40,8]],          vol:1120, was:'Жим гантелей під кутом'},
+    {n:'Розводка в кросовері', target:12, sets:[[17.5,12],[17.5,12],[17.5,10]],   vol:595},
+    {n:'Жим стоячи',           target:6,  sets:[[47.5,6],[47.5,6],[47.5,5],[45,6]], vol:1078},
+    {n:'Махи в сторони',       target:15, sets:[[12,15],[12,15],[12,13]],         vol:516,  up:'+1 кг', pr:0},
+    {n:'Французький жим',      target:10, sets:[[27.5,10],[27.5,10],[27.5,9]],    vol:798}
+  ]
+};
+
+/* ================= helpers ================= */
+const fmt   = n => (Math.round(n*100)/100).toString().replace(/\.0+$/,'');
+const pad   = n => String(n).padStart(2,'0');
+const clock = s => Math.floor(s/60)+':'+pad(s%60);
+const thou  = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const esc   = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function pluralRecords(n){
+  const a = n%10, b = n%100;
+  if(a===1 && b!==11) return 'запис чекає';
+  if(a>=2 && a<=4 && (b<12 || b>14)) return 'записи чекають';
+  return 'записів чекають';
+}
+function pluralEx(n){
+  const a = n%10, b = n%100;
+  if(a===1 && b!==11) return 'вправа';
+  if(a>=2 && a<=4 && (b<12 || b>14)) return 'вправи';
+  return 'вправ';
+}
+function series(base, pct, n, seed){
+  const start = pct === 0 ? base*0.99 : base/(1+pct/100);
+  const out = []; let s = seed>>>0;
+  for(let i=0;i<n;i++){
+    s = (s*1664525 + 1013904223) >>> 0;
+    const jitter = ((s>>>16)/65535 - 0.5) * base * 0.02;
+    out.push(start + (base-start)*(i/(n-1)) + (i===n-1 ? 0 : jitter));
+  }
+  return out;
+}
+function sparkline(values, w, h, color){
+  const min = Math.min(...values), max = Math.max(...values), span = (max-min)||1;
+  const pts = values.map((v,i)=>{
+    const x = (i/(values.length-1))*(w-2)+1;
+    const y = h-1 - ((v-min)/span)*(h-2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" fill="none" aria-hidden="true">'+
+         '<polyline points="'+pts+'" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+/* charts: one series each, direct-labelled, no chartjunk */
+function lineChart(vals, unit){
+  const W=318, H=150, R=40, T=12, B=10;
+  const pw = W-R, ph = H-T-B;
+  const min = Math.min(...vals), max = Math.max(...vals), span = (max-min)||1;
+  const lo = min-span*0.25, hi = max+span*0.25, s = hi-lo;
+  const X = i => (i/(vals.length-1))*pw;
+  const Y = v => T + ph - ((v-lo)/s)*ph;
+  const pts  = vals.map((v,i)=> X(i).toFixed(1)+','+Y(v).toFixed(1));
+  const area = 'M'+pts.join(' L')+' L'+pw.toFixed(1)+','+(T+ph)+' L0,'+(T+ph)+' Z';
+  const grid = [max, (max+min)/2, min].map(v =>
+    '<line class="grid" x1="0" x2="'+pw+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/>'+
+    '<text class="vlab" x="'+(pw+9)+'" y="'+(Y(v)+3.5).toFixed(1)+'">'+fmt(Math.round(v*10)/10)+'</text>').join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Динаміка: '+unit+'">'+
+         grid+
+         '<path class="area" d="'+area+'"/>'+
+         '<polyline class="line" points="'+pts.join(' ')+'"/>'+
+         '<circle class="dot" cx="'+X(vals.length-1).toFixed(1)+'" cy="'+Y(vals[vals.length-1]).toFixed(1)+'" r="4"/>'+
+         '</svg>';
+}
+function barChart(vals){
+  const W=318, H=110, R=40, T=8, B=6;
+  const pw = W-R, ph = H-T-B;
+  const max = Math.max(...vals);
+  const gap = 5, bw = (pw-gap*(vals.length-1))/vals.length;
+  const bars = vals.map((v,i)=>{
+    const h = Math.max(3, (v/max)*ph);
+    return '<rect class="bar'+(i===vals.length-1?' hi':'')+'" x="'+(i*(bw+gap)).toFixed(1)+
+           '" y="'+(T+ph-h).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="3"/>';
+  }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Обʼєм за тренування">'+bars+
+         '<text class="vlab" x="'+(pw+9)+'" y="'+(T+7)+'">'+thou(max)+'</text></svg>';
+}
+
+/* ================= app ================= */
+(function(){
+const root = document.querySelector('.v');
+const $  = s => root.querySelector(s);
+const $$ = s => [...root.querySelectorAll(s)];
+const F  = n => root.querySelector('[data-f="'+n+'"]');
+
+const cfg   = {rest:120, autofill:true, active:true, days:3, name:''};
+const ex    = PLAN.map(e => ({...e, done:[], sub:null}));
+ex[0].done.push({w:82.5, r:8, hit:true});          // the session is already under way
+const day   = PLAN.map(e => ({...e}));             // the day being edited
+const state = {i:0, w:0, reps:0, elapsed:770, restEnd:0, screen:'home', stack:[], detail:'Жим лежачи'};
+
+/* ---------- navigation ---------- */
+const TABS_HTML = TABS.map(t =>
+  '<button data-tab="'+t.k+'">'+
+  '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="'+t.d+'"/></svg>'+
+  '<span>'+t.label+'</span></button>').join('');
+$$('[data-tabs]').forEach(nav => nav.innerHTML = TABS_HTML);
+
+const ROOTS = ['home','progress','catalog','empty'];
+function show(name, push){
+  if(push && state.screen !== name) state.stack.push(state.screen);
+  if(ROOTS.includes(name)) state.stack = [];
+  state.screen = name;
+  $$('.scr').forEach(s => s.toggleAttribute('data-on', s.dataset.screen === name));
+  const tab = name === 'progress' ? 'progress'
+            : (name === 'catalog' ? 'exercises' : 'workout');
+  $$('[data-tab]').forEach(b => b.toggleAttribute('data-on', b.dataset.tab === tab));
+  $$('.body').forEach(b => b.scrollTop = 0);
+  root.scrollTop = 0;   // the shell itself must never scroll
+  if(name === 'summary')   playSummary();
+  if(name === 'exdetail')  renderDetail(state.detail);
+  if(name === 'day')       renderDay();
+  if(name === 'newprogram')renderSlots();
+}
+function back(){ show(state.stack.pop() || 'home'); }
+
+/* ---------- workout ---------- */
+const list  = $('[data-ex-list]');
+const panel = $('[data-panel]');
+ex.forEach((e,i)=>{
+  const b = document.createElement('button');
+  b.className = 'exrow';
+  b.dataset.ex = i;
+  b.innerHTML = '<span><span class="nm" data-rowname></span></span><span class="mt" data-rowmeta></span>';
+  b.addEventListener('click', ()=> select(i));
+  list.insertBefore(b, panel);
+});
+
+function rowLabel(i){
+  const e = ex[i], row = $('[data-ex="'+i+'"]');
+  row.querySelector('[data-rowname]').textContent = e.sub || e.name;
+  row.querySelector('[data-rowmeta]').textContent =
+    e.done.length >= e.sets ? e.done.length+' / '+e.sets
+                            : e.sets+'×'+e.reps+' · '+fmt(e.w)+' кг';
+  row.toggleAttribute('data-done', e.done.length >= e.sets);
+}
+function select(i){
+  state.i = i;
+  const e = ex[i];
+  state.w = cfg.autofill ? (e.done.length ? e.done[e.done.length-1].w : e.w) : 0;
+  state.reps = cfg.autofill ? e.reps : 0;
+  $$('[data-ex]').forEach(r => r.hidden = (+r.dataset.ex === i));
+  $('[data-ex="'+i+'"]').after(panel);
+  fillPanel();
+}
+function fillPanel(){
+  const e = ex[state.i];
+  F('name').textContent = e.sub || e.name;
+  panel.toggleAttribute('data-swapped', !!e.sub);
+  if(e.sub) F('swapped').textContent = 'замість: ' + e.name;
+  F('setno').textContent = 'Підхід ' + Math.min(e.done.length+1, e.sets) + ' з ' + e.sets;
+  F('target').textContent = e.reps + ' повторень';
+  F('weight').textContent = fmt(state.w);
+  F('reps').textContent = state.reps;
+  F('stepdown').textContent = '−'+fmt(e.step);
+  F('stepup').textContent   = '+'+fmt(e.step);
+  renderTiles();
+  ex.forEach((_,i)=> rowLabel(i));
+  renderSegs();
+}
+function renderTiles(){
+  const e = ex[state.i], out = [];
+  for(let i=0;i<e.sets;i++){
+    const s = e.done[i];
+    out.push(s ? '<span class="tile"'+(s.hit?'':' data-miss')+'>'+fmt(s.w)+'×'+s.r+'</span>'
+               : '<span class="tile" data-pending>·</span>');
+  }
+  $('[data-tiles]').innerHTML = out.join('');
+}
+function renderSegs(){
+  $('[data-segs]').innerHTML = ex.map((e,i)=>
+    '<i'+(e.done.length>=e.sets?' data-done':'')+(i===state.i?' data-cur':'')+'></i>').join('');
+}
+
+/* steppers: feedback on pointer-down, then accelerating repeat while held */
+function bump(kind){
+  const e = ex[state.i];
+  if(kind === 'w-') state.w = Math.max(0, state.w - e.step);
+  if(kind === 'w+') state.w += e.step;
+  if(kind === 'r-') state.reps = Math.max(0, state.reps - 1);
+  if(kind === 'r+') state.reps += 1;
+  F('weight').textContent = fmt(state.w);
+  F('reps').textContent = state.reps;
+}
+$$('[data-act]').forEach(btn=>{
+  const kind = btn.dataset.act;
+  if(!/^[wr][-+]$/.test(kind)) return;
+  let hold, delay;
+  const stop = ()=> clearTimeout(hold);
+  btn.addEventListener('pointerdown', e=>{
+    btn.setPointerCapture(e.pointerId);
+    bump(kind);
+    delay = 110;
+    hold = setTimeout(function run(){
+      bump(kind);
+      delay = Math.max(45, delay - 8);
+      hold = setTimeout(run, delay);
+    }, 420);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(t => btn.addEventListener(t, stop));
+});
+
+const commitBtn = $('[data-commit]');
+const rest      = $('[data-rest]');
+const restFill  = $('[data-rest-fill]');
+let restAnim = null, restTick = null;
+
+function totalSets(){ return ex.reduce((a,e)=> a + e.done.length, 0); }
+function updateOffline(){
+  const n = totalSets();
+  $('[data-offline]').toggleAttribute('data-on', n >= 3);
+  F('offline-text').textContent = n + ' ' + pluralRecords(n) + ' на зʼєднання';
+}
+function commit(){
+  const e = ex[state.i];
+  if(e.done.length >= e.sets) return;
+  e.done.push({w:state.w, r:state.reps, hit: state.reps >= e.reps});
+  renderTiles();
+  const fresh = $('[data-tiles]').children[e.done.length-1];
+  if(fresh) fresh.setAttribute('data-fresh','');
+  rowLabel(state.i);
+  renderSegs();
+  updateOffline();
+  startRest();
+  if(e.done.length >= e.sets){
+    const next = ex.findIndex(x => x.done.length < x.sets);
+    if(next >= 0) setTimeout(()=> select(next), 600);
+  }
+}
+function startRest(){
+  commitBtn.setAttribute('data-hide','');
+  rest.setAttribute('data-on','');
+  state.restEnd = Date.now() + cfg.rest*1000;
+  restAnim?.cancel();
+  restFill.style.transform = 'scaleX(1)';
+  if(!reduceMotion()){
+    restAnim = restFill.animate([{transform:'scaleX(1)'},{transform:'scaleX(0)'}],
+      {duration: cfg.rest*1000, easing:'linear', fill:'forwards'});
+  }
+  clearInterval(restTick);
+  const paint = ()=>{
+    const left = Math.max(0, Math.round((state.restEnd - Date.now())/1000));
+    F('rest-time').textContent = clock(left);
+    if(left <= 0) stopRest();
+  };
+  paint();
+  restTick = setInterval(paint, 250);
+}
+function stopRest(){
+  clearInterval(restTick);
+  restAnim?.cancel();
+  rest.removeAttribute('data-on');
+  commitBtn.removeAttribute('data-hide');
+}
+
+/* ---------- swap sheet ---------- */
+$('[data-chips]').innerHTML = RECENT.map(n => '<button data-chip>'+n+'</button>').join('');
+const sheetInput = $('[data-sheet-input]');
+
+/* ---------- summary ---------- */
+function countTo(el, target, ms, format){
+  const t0 = performance.now();
+  (function step(now){
+    const p = Math.min(1, (now-t0)/ms);
+    el.textContent = format(Math.round(target*(1-Math.pow(1-p,3))));
+    if(p < 1) requestAnimationFrame(step);
+  })(t0);
+}
+function playSummary(){
+  $$('.rise').forEach(el=>{ el.style.animation='none'; void el.offsetWidth; el.style.animation=''; });
+  if(reduceMotion()){
+    F('s-vol').textContent = thou(6940); F('s-sets').textContent = '20';
+  } else {
+    countTo(F('s-vol'), 6940, 900, thou);
+    countTo(F('s-sets'), 20, 900, String);
+  }
+}
+
+/* ---------- progress ---------- */
+function renderPeriod(p){
+  F('p-sessions').textContent = PERIOD[p].s;
+  F('p-volume').textContent   = PERIOD[p].v;
+  F('p-records').textContent  = PERIOD[p].r;
+  const css = getComputedStyle(root);
+  const dim = css.getPropertyValue('--dim2').trim();
+  const acc = css.getPropertyValue('--acc').trim();
+  $('[data-exstats]').innerHTML = EXSTATS.map(s=>{
+    const pct = s.p[p], flat = pct === 0;
+    return '<button class="exstat" data-detail="'+esc(s.n)+'">'+
+      '<span><span class="nm">'+s.n+'</span><span class="kg">робоча '+fmt(s.w)+' кг</span></span>'+
+      sparkline(series(s.w, pct, 10, s.seed + p.charCodeAt(0)), 56, 22, flat ? dim : acc)+
+      '<span class="pc"'+(flat?' data-flat':'')+'>'+(flat ? '0%' : '+'+pct.toFixed(1)+'%')+'</span>'+
+      '</button>';
+  }).join('');
+}
+$('[data-history]').innerHTML = HISTORY.map((h,i) =>
+  '<button class="hrow" data-past="'+i+'" style="width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer">'+
+  '<span><span class="d" style="display:block">'+h.d+'</span>'+
+  '<span class="dd" style="display:block">'+h.day+'</span></span>'+
+  '<span class="r"><span style="display:block">'+h.t+'</span>'+
+  '<span style="display:block;margin-top:4px">'+h.v+'</span></span></button>').join('');
+renderPeriod('m');
+
+/* ---------- exercise detail ---------- */
+function detailFor(name){
+  const st   = EXSTATS.find(x=>x.n===name) || EXSTATS[0];
+  const plan = PLAN.find(p=>p.name===name);
+  const cat  = CATALOG.find(c=>c.n===name);
+  const target = plan ? plan.reps : 8;
+  const round  = v => Math.round(v/2.5)*2.5;
+  const w = series(st.w, st.p.y, 12, st.seed).map(round);
+  const v = w.map((x,i)=> Math.round((x*target*3.2 + (i%4)*35)/10)*10);
+  const dates = ['4 вересня','2 вересня','31 серпня','29 серпня'];
+  const log = dates.map((d,i)=>{
+    const base = w[11-i*2];
+    const sets = [
+      [base, target],
+      [base, target],
+      [base, i===0 ? target : target-1],
+      [i===0 ? base : round(base-2.5), target-2]
+    ];
+    return {d, sets, vol: Math.round(sets.reduce((a,s)=>a+s[0]*s[1],0))};
+  });
+  // the hand-authored session must not contradict the past-workout screen
+  const authored = PAST.ex.find(x => x.n === name);
+  if(authored){
+    log[0] = {d: PAST.date, sets: authored.sets, vol: authored.vol};
+    v[11] = authored.vol;
+  }
+  const [prW, prR] = st.pr;
+  return {
+    group: cat ? cat.g : 'Інше', gear: cat ? cat.e.toLowerCase() : 'без обладнання',
+    pr: fmt(prW)+' × '+prR, orm: (prW*(1+prR/30)).toFixed(1),
+    w, v, log, target,
+    growth: st.p.y
+  };
+}
+function renderDetail(name){
+  const d = detailFor(name);
+  F('xd-name').textContent = name;
+  F('xd-meta').textContent = d.group + ' · ' + d.gear;
+  F('xd-pr').textContent   = d.pr;
+  F('xd-1rm').textContent  = d.orm;
+
+  $('[data-chart-weight]').innerHTML =
+    '<div class="ct"><span class="h">Робоча вага, кг</span>'+
+    '<span class="now">'+fmt(d.w[11])+'</span>'+
+    '<span class="delta">+'+d.growth.toFixed(1)+'%</span></div>'+
+    lineChart(d.w, 'робоча вага в кілограмах')+
+    '<div class="xrow"><span>рік тому</span><span>сьогодні</span></div>';
+
+  $('[data-chart-volume]').innerHTML =
+    '<div class="ct"><span class="h">Обʼєм за тренування, кг</span>'+
+    '<span class="now">'+thou(d.v[11])+'</span></div>'+
+    barChart(d.v)+
+    '<div class="xrow"><span>12 останніх тренувань</span><span>останнє</span></div>';
+
+  $('[data-setlog]').innerHTML = d.log.map(s =>
+    '<div class="dategroup"><div class="dh"><span class="d">'+s.d+'</span>'+
+    '<span class="vol">'+thou(s.vol)+' кг</span></div>'+
+    '<div class="setline">'+s.sets.map(([w,r]) =>
+      '<span class="setchip"'+(r < d.target ? ' data-miss' : '')+'>'+fmt(w)+' × '+r+'</span>').join('')+
+    '</div></div>').join('');
+}
+
+/* ---------- past workout ---------- */
+$('[data-pastlist]').innerHTML = PAST.ex.map(e =>
+  '<div class="pastex">'+
+    '<div class="ph"><span><span class="nm">'+e.n+'</span>'+
+      (e.was ? '<span class="subnote">заміна: '+e.was+'</span>' : '')+
+    '</span></div>'+
+    '<div class="setline">'+e.sets.map(([w,r],i)=>
+      '<span class="setchip"'+(r < e.target ? ' data-miss' : (e.pr === i ? ' data-pr' : ''))+'>'+
+      fmt(w)+' × '+r+'</span>').join('')+'</div>'+
+    '<div class="tot"><span>'+thou(e.vol)+' кг обʼєму</span>'+
+      (e.up ? '<span class="up">робоча вага '+e.up+'</span>' : '<span>робоча вага без змін</span>')+
+    '</div>'+
+  '</div>').join('');
+F('pw-date').textContent = PAST.date;
+F('pw-day').textContent  = PAST.day;
+F('pw-sub').textContent  = PAST.sub;
+F('pw-time').textContent = PAST.time;
+F('pw-vol').textContent  = PAST.vol;
+F('pw-sets').textContent = PAST.sets;
+F('pw-cmp').textContent  = PAST.cmp;
+
+/* ---------- catalog ---------- */
+$('[data-filters]').innerHTML = GROUPS.map((g,i)=>
+  '<button data-group="'+g+'"'+(i===0?' data-on':'')+'>'+g+'</button>').join('');
+let catGroup = 'Усі', catQuery = '';
+function renderCatalog(){
+  const q = catQuery.trim().toLowerCase();
+  const rows = CATALOG.filter(c =>
+    (catGroup === 'Усі' || c.g === catGroup) && (!q || c.n.toLowerCase().includes(q)));
+  $('[data-catlist]').innerHTML = rows.length
+    ? rows.map(c => '<button class="exrow">'+
+        '<span class="catname"><span class="nm">'+c.n+'</span>'+
+        (c.mine ? '<span class="mine">моя</span>' : '')+'</span>'+
+        '<span class="mt">'+c.e+'</span></button>').join('')
+    : '<div class="nores">Нічого не знайшлося. Впиши свою назву, і вона стане твоєю вправою.</div>';
+}
+$('[data-search]').addEventListener('input', e=>{ catQuery = e.target.value; renderCatalog(); });
+$('[data-filters]').addEventListener('click', e=>{
+  const b = e.target.closest('[data-group]'); if(!b) return;
+  catGroup = b.dataset.group;
+  $$('[data-group]').forEach(x => x.toggleAttribute('data-on', x === b));
+  renderCatalog();
+});
+renderCatalog();
+
+/* ---------- program day editor: reorder + real number entry ---------- */
+const dayHost = $('[data-day-list]');
+function renderDay(){
+  dayHost.innerHTML = day.map((e,i)=>
+    '<div class="dayex" data-row="'+i+'">'+
+      '<span class="grip" data-grip aria-label="Перетягнути">'+
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8h.01M8 12h.01M8 16h.01M16 8h.01M16 12h.01M16 16h.01"/></svg>'+
+      '</span>'+
+      '<button class="info" data-edit="'+i+'">'+
+        '<span class="nm">'+e.name+'</span>'+
+        '<span class="mt">'+e.sets+' × '+e.reps+' · крок '+fmt(e.step)+' кг</span>'+
+      '</button>'+
+      '<button class="kill" data-del="'+i+'" aria-label="Прибрати вправу">'+
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'+
+      '</button>'+
+    '</div>'+
+    '<div class="editor" data-editor="'+i+'">'+
+      '<span class="numfield"><label>Підходи</label>'+
+        '<input type="number" inputmode="numeric" min="1" max="10" step="1" data-set="sets" data-i="'+i+'" value="'+e.sets+'"></span>'+
+      '<span class="numfield"><label>Повтори</label>'+
+        '<input type="number" inputmode="numeric" min="1" max="50" step="1" data-set="reps" data-i="'+i+'" value="'+e.reps+'"></span>'+
+      '<span class="numfield"><label>Крок, кг</label>'+
+        '<input type="number" inputmode="decimal" min="0.5" max="20" step="0.5" data-set="step" data-i="'+i+'" value="'+fmt(e.step)+'"></span>'+
+    '</div>').join('');
+}
+dayHost.addEventListener('click', e=>{
+  const ed = e.target.closest('[data-edit]');
+  if(ed){
+    const box = dayHost.querySelector('[data-editor="'+ed.dataset.edit+'"]');
+    const open = box.hasAttribute('data-open');
+    dayHost.querySelectorAll('.editor').forEach(x => x.removeAttribute('data-open'));
+    if(!open) box.setAttribute('data-open','');
+    return;
+  }
+  const del = e.target.closest('[data-del]');
+  if(del){ day.splice(+del.dataset.del, 1); renderDay(); }
+});
+dayHost.addEventListener('input', e=>{
+  const inp = e.target.closest('[data-set]'); if(!inp) return;
+  const i = +inp.dataset.i, v = parseFloat(inp.value);
+  if(!isFinite(v) || v <= 0) return;
+  day[i][inp.dataset.set] = v;
+  const row = dayHost.querySelector('[data-row="'+i+'"] .mt');
+  row.textContent = day[i].sets+' × '+day[i].reps+' · крок '+fmt(day[i].step)+' кг';
+});
+
+/* drag to reorder: 1:1 tracking, swap when the pointer crosses a neighbour */
+let drag = null;
+dayHost.addEventListener('pointerdown', e=>{
+  const grip = e.target.closest('[data-grip]'); if(!grip) return;
+  const row = grip.closest('.dayex');
+  dayHost.querySelectorAll('.editor').forEach(x => x.removeAttribute('data-open'));
+  grip.setPointerCapture(e.pointerId);
+  drag = {row, grip, startY:e.clientY};
+  row.setAttribute('data-drag','');
+  row.style.transition = 'none';
+});
+dayHost.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  const rows = [...dayHost.querySelectorAll('.dayex')];
+  const idx  = rows.indexOf(drag.row);
+  const prev = rows[idx-1], next = rows[idx+1];
+  const y = e.clientY;
+  if(prev && y < prev.getBoundingClientRect().top + prev.offsetHeight/2){
+    flip(prev, ()=> dayHost.insertBefore(drag.row, prev));
+  } else if(next && y > next.getBoundingClientRect().bottom - next.offsetHeight/2){
+    flip(next, ()=> dayHost.insertBefore(drag.row, next.nextSibling));
+  }
+  drag.row.style.transform = 'translateY('+(y - drag.startY)+'px)';
+});
+function flip(el, mutate){
+  const a = el.getBoundingClientRect().top;
+  const before = drag.row.offsetTop;
+  mutate();
+  drag.startY += drag.row.offsetTop - before;
+  const b = el.getBoundingClientRect().top;
+  if(reduceMotion()) return;
+  el.removeAttribute('data-shift');
+  el.style.transition = 'none';
+  el.style.transform = 'translateY('+(a-b)+'px)';
+  requestAnimationFrame(()=>{
+    el.style.transition = '';
+    el.setAttribute('data-shift','');
+    el.style.transform = '';
+  });
+}
+function endDrag(){
+  if(!drag) return;
+  const row = drag.row;
+  row.removeAttribute('data-drag');
+  row.style.transition = 'transform 200ms var(--ease-out)';
+  row.style.transform = '';
+  const order = [...dayHost.querySelectorAll('.dayex')].map(r => day[+r.dataset.row]);
+  drag = null;
+  setTimeout(()=>{ day.length = 0; day.push(...order); renderDay(); }, 200);
+}
+dayHost.addEventListener('pointerup', endDrag);
+dayHost.addEventListener('pointercancel', endDrag);
+
+/* ---------- configuration form ---------- */
+const DAYNAMES = ['День A','День B','День C','День D','День E'];
+const SLOTFILL = [
+  {n:'День A', m:'Груди, плечі, трицепс', c:6},
+  {n:'День B', m:'Спина, біцепс',         c:6},
+  {n:'День C', m:'Ноги, кор',             c:6},
+  {n:'День D', m:'',                      c:0},
+  {n:'День E', m:'',                      c:0}
+];
+function renderSlots(){
+  $('[data-slots]').innerHTML = SLOTFILL.slice(0, cfg.days).map((s,i)=>
+    '<button class="slot" data-go="day">'+
+      '<span class="k">'+String.fromCharCode(65+i)+'</span>'+
+      '<span><span class="nm">'+s.n+'</span>'+
+        (s.c ? '<span class="mt">'+s.m+' · '+s.c+' '+pluralEx(s.c)+'</span>'
+             : '<span class="mt" data-empty>Порожній, додай вправи</span>')+
+      '</span>'+
+      '<span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>'+
+    '</button>').join('');
+}
+$('[data-daycount]').addEventListener('click', e=>{
+  const b = e.target.closest('[data-days]'); if(!b) return;
+  cfg.days = +b.dataset.days;
+  $$('[data-days]').forEach(x => x.toggleAttribute('data-on', x === b));
+  renderSlots();
+});
+const restField = $('[data-form="rest"]');
+$$('[data-rest-step]').forEach(b => b.addEventListener('click', ()=>{
+  cfg.rest = Math.min(300, Math.max(30, cfg.rest + (+b.dataset.restStep)));
+  restField.textContent = clock(cfg.rest);
+}));
+$$('[data-toggle]').forEach(b => b.addEventListener('click', ()=>{
+  const on = !b.hasAttribute('data-on');
+  b.toggleAttribute('data-on', on);
+  cfg[b.dataset.toggle] = on;
+}));
+function saveProgram(){
+  const name = $('[data-form="name"]').value.trim();
+  const err  = $('[data-form-err]');
+  if(!name){
+    err.textContent = 'Дай програмі назву, інакше ти не відрізниш її від інших у списку.';
+    err.setAttribute('data-on','');
+    $('[data-form="name"]').focus();
+    return;
+  }
+  err.removeAttribute('data-on');
+  cfg.name = name;
+  show('program');
+}
+
+/* ---------- one delegated handler ---------- */
+root.addEventListener('click', e=>{
+  if(e.target.closest('[data-back]')){ back(); return; }
+
+  const chip = e.target.closest('[data-chip]');
+  if(chip){ sheetInput.value = chip.textContent; return; }
+
+  const det = e.target.closest('[data-detail]');
+  if(det){ state.detail = det.dataset.detail; show('exdetail', true); return; }
+
+  if(e.target.closest('[data-past]')){ show('past', true); return; }
+
+  const tab = e.target.closest('[data-tab]');
+  if(tab){ show(TABS.find(x => x.k === tab.dataset.tab).screen); return; }
+
+  const per = e.target.closest('[data-period]');
+  if(per){
+    $$('[data-period]').forEach(b => b.toggleAttribute('data-on', b === per));
+    renderPeriod(per.dataset.period);
+    return;
+  }
+
+  const go = e.target.closest('[data-go]');
+  if(go){ show(go.dataset.go, true); return; }
+
+  const act = e.target.closest('[data-act]');
+  if(!act) return;
+  switch(act.dataset.act){
+    case 'commit':      commit(); break;
+    case 'skip':        stopRest(); break;
+    case 'swap':        root.setAttribute('data-sheet',''); setTimeout(()=>sheetInput.focus({preventScroll:true}), 340); break;
+    case 'close-sheet': root.removeAttribute('data-sheet'); break;
+    case 'save-program':saveProgram(); break;
+    case 'apply-swap': {
+      const v = sheetInput.value.trim();
+      if(v){ ex[state.i].sub = v; fillPanel(); }
+      root.removeAttribute('data-sheet');
+      sheetInput.value = '';
+      break;
+    }
+  }
+});
+
+setInterval(()=>{
+  state.elapsed++;
+  F('elapsed').textContent = clock(state.elapsed);
+}, 1000);
+
+restField.textContent = clock(cfg.rest);
+F('rest-time').textContent = clock(cfg.rest);
+select(0);
+updateOffline();
+renderSlots();
+})();
+</script>

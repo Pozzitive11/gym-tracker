@@ -1,0 +1,119 @@
+
+<style>
+/* ============================================================
+   IRON - screens added after the direction was picked:
+   program, program day, exercise detail, past workout
+   ============================================================ */
+
+/* generic navigable row with a chevron */
+.v-iron .navrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border:0;border-radius:18px;background:var(--surf);color:var(--text);font:inherit;margin-bottom:8px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .navrow:active{transform:scale(.985)}
+.v-iron .navrow .nm{display:block;font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em}
+.v-iron .navrow .mt{display:block;color:var(--dim);font-size:12.5px;margin-top:5px}
+.v-iron .navrow .chev{margin-left:auto;flex:0 0 auto;color:var(--dim2)}
+
+/* action list (make active / rename / delete) */
+.v-iron .actions{margin-top:8px;border-radius:18px;background:var(--surf);overflow:hidden}
+.v-iron .actions button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:16px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;transition:background 140ms ease}
+.v-iron .actions button:last-child{border-bottom:0}
+.v-iron .actions button:active{background:var(--surf2)}
+.v-iron .actions button[data-danger]{color:#FF6B5A}
+.v-iron .actions svg{flex:0 0 auto;color:var(--dim)}
+.v-iron .actions button[data-danger] svg{color:#FF6B5A}
+
+/* --- program day editor: the one screen with real number entry --- */
+.v-iron .dayex{position:relative;display:flex;align-items:center;gap:10px;padding:14px 14px 14px 8px;border-radius:18px;background:var(--surf);margin-bottom:8px}
+.v-iron .dayex[data-drag]{z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.55);background:var(--surf2)}
+.v-iron .dayex[data-shift]{transition:transform 220ms var(--ease-out)}
+.v-iron .grip{width:36px;height:44px;flex:0 0 auto;display:grid;place-items:center;color:var(--dim2);cursor:grab;touch-action:none}
+.v-iron .grip:active{cursor:grabbing}
+.v-iron .dayex .info{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:var(--text);font:inherit;padding:0;cursor:pointer}
+.v-iron .dayex .nm{display:block;font-size:14.5px;font-weight:500;line-height:1.3}
+.v-iron .dayex .mt{display:block;margin-top:5px;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.v-iron .dayex .kill{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--dim2);cursor:pointer;transition:color 140ms ease}
+.v-iron .dayex .kill:active{color:#FF6B5A}
+
+.v-iron .editor{display:none;gap:8px;margin:0 0 8px;padding:16px;border-radius:18px;background:var(--surf2)}
+.v-iron .editor[data-open]{display:flex}
+.v-iron .numfield{flex:1;min-width:0}
+.v-iron .numfield label{display:block;margin-bottom:8px;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.v-iron .numfield input{width:100%;height:56px;padding:0 12px;border:0;border-radius:14px;background:var(--bg);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;text-align:center;outline:none;box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow 140ms ease;-moz-appearance:textfield}
+.v-iron .numfield input::-webkit-outer-spin-button,
+.v-iron .numfield input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.v-iron .numfield input:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+
+.v-iron .stickybar{flex:0 0 auto;padding:12px 20px calc(env(safe-area-inset-bottom) + 14px);border-top:1px solid var(--line);background:rgba(10,10,11,.9);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+
+/* --- charts --- */
+.v-iron .chart{margin-top:14px;padding:18px 16px 12px;border-radius:20px;background:var(--surf)}
+.v-iron .chart .ct{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.v-iron .chart .ct .h{font-size:12.5px;font-weight:600;color:var(--dim)}
+.v-iron .chart .ct .now{margin-left:auto;font-family:"Unbounded",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .chart .ct .delta{font-size:12.5px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums}
+.v-iron .chart svg{display:block;width:100%;overflow:visible}
+.v-iron .chart .grid{stroke:var(--line);stroke-width:1}
+.v-iron .chart .line{fill:none;stroke:var(--acc);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.v-iron .chart .area{fill:rgba(216,255,62,.08)}
+.v-iron .chart .dot{fill:var(--acc)}
+.v-iron .chart .bar{fill:var(--surf2)}
+.v-iron .chart .bar.hi{fill:var(--acc)}
+.v-iron .chart .ax{fill:var(--dim2);font-family:"Onest",sans-serif;font-size:10px}
+.v-iron .chart .vlab{fill:var(--dim);font-family:"Onest",sans-serif;font-size:10px;font-variant-numeric:tabular-nums}
+.v-iron .chart .xrow{display:flex;justify-content:space-between;margin-top:10px;font-size:10.5px;color:var(--dim2)}
+
+.v-iron .kpis{display:flex;gap:10px;margin-top:14px}
+.v-iron .kpis div{flex:1;padding:16px 14px;border-radius:18px;background:var(--surf)}
+.v-iron .kpis .n{font-family:"Unbounded",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .kpis .l{margin-top:6px;font-size:11px;color:var(--dim)}
+
+/* --- set history grouped by date --- */
+.v-iron .dategroup{padding:16px 0 14px;border-bottom:1px solid var(--line)}
+.v-iron .dategroup .dh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.v-iron .dategroup .dh .d{font-size:13.5px;font-weight:600}
+.v-iron .dategroup .dh .vol{margin-left:auto;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* set chips: hitting the target and missing it must look different */
+.v-iron .setline{display:flex;flex-wrap:wrap;gap:6px}
+.v-iron .setchip{padding:9px 12px;border-radius:12px;background:var(--surf2);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.v-iron .setchip[data-miss]{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,159,69,.45);color:var(--warn)}
+.v-iron .setchip[data-pr]{background:var(--acc);color:var(--acc-ink)}
+
+/* --- past workout --- */
+.v-iron .hero{padding:18px 20px 20px;border-radius:24px;background:var(--surf);margin-top:4px}
+.v-iron .hero .d{font-family:"Unbounded",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.03em}
+.v-iron .hero .dd{color:var(--dim);font-size:13.5px;margin-top:6px}
+.v-iron .hero .row{display:flex;gap:10px;margin-top:18px}
+.v-iron .hero .row div{flex:1}
+.v-iron .hero .row .n{font-family:"Unbounded",sans-serif;font-weight:700;font-size:18px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .hero .row .l{margin-top:5px;font-size:11px;color:var(--dim)}
+.v-iron .hero .cmp{display:flex;align-items:center;gap:8px;margin-top:16px;padding:12px 14px;border-radius:14px;background:rgba(216,255,62,.1);color:var(--acc);font-size:13px;font-weight:600}
+
+.v-iron .pastex{padding:18px 0;border-bottom:1px solid var(--line)}
+.v-iron .pastex .ph{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.v-iron .pastex .nm{font-size:15px;font-weight:600}
+.v-iron .subnote{display:block;margin-top:5px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.v-iron .pastex .tot{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.v-iron .pastex .up{color:var(--acc);font-weight:600}
+.v-iron .legend{display:flex;gap:16px;padding:14px 0 4px;font-size:11.5px;color:var(--dim)}
+.v-iron .legend span{display:flex;align-items:center;gap:7px}
+.v-iron .legend i{width:14px;height:14px;border-radius:5px;background:var(--surf2)}
+.v-iron .legend i[data-miss]{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,159,69,.45)}
+.v-iron .readonly{padding:18px 0 4px;font-size:12.5px;color:var(--dim2);line-height:1.6}
+
+/* --- catalog --- */
+.v-iron .search{width:100%;height:52px;padding:0 16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;font-size:15px;outline:none;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow 140ms ease}
+.v-iron .search:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+.v-iron .search::placeholder{color:var(--dim2)}
+.v-iron .filters{display:flex;gap:8px;overflow-x:auto;padding:14px 0 6px;scrollbar-width:none}
+.v-iron .filters::-webkit-scrollbar{display:none}
+.v-iron .filters button{flex:0 0 auto;padding:10px 14px;border:0;border-radius:999px;background:var(--surf);color:var(--dim);font:inherit;font-size:13px;cursor:pointer;transition:background 140ms ease,color 140ms ease}
+.v-iron .filters button[data-on]{background:var(--acc);color:var(--acc-ink);font-weight:600}
+.v-iron .catname{display:flex;align-items:center}
+.v-iron .mine{margin-left:8px;flex:0 0 auto;padding:3px 7px;border-radius:6px;background:rgba(216,255,62,.14);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+.v-iron .nores{padding:34px 4px;color:var(--dim);font-size:14px;line-height:1.6}
+
+@media (hover:hover) and (pointer:fine){
+  .v-iron .navrow:hover{background:var(--surf2)}
+  .v-iron .actions button:hover{background:var(--surf2)}
+}
+</style>

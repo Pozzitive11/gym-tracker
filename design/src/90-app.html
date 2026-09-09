@@ -1,0 +1,684 @@
+
+<script>
+/* ============================================================
+   Трекер тренувань - прототип напрямку IRON
+   Mock data. Every number below is invented for the prototype.
+   ============================================================ */
+
+const PLAN = [
+  {name:'Жим лежачи',              sets:4, reps:8,  step:2.5, w:82.5},
+  {name:'Жим гантелей під кутом',  sets:3, reps:10, step:2,   w:30},
+  {name:'Розводка в кросовері',    sets:3, reps:12, step:2.5, w:17.5},
+  {name:'Жим стоячи',              sets:4, reps:6,  step:2.5, w:47.5},
+  {name:'Махи в сторони',          sets:3, reps:15, step:1,   w:12},
+  {name:'Французький жим',         sets:3, reps:10, step:2.5, w:27.5}
+];
+const RECENT  = ['Жим у Сміті','Жим гантелей лежачи','Хаммер на груди','Віджимання на брусах'];
+const PERIOD  = {
+  m:{s:'11',  v:'84 320',  r:'3'},
+  q:{s:'32',  v:'246 180', r:'9'},
+  y:{s:'118', v:'902 640', r:'27'}
+};
+const EXSTATS = [
+  {n:'Жим лежачи',           w:82.5, p:{m:6.1, q:14.3, y:38.5}, seed:7,  pr:[85,8]},
+  {n:'Присід зі штангою',    w:105,  p:{m:8.8, q:18.2, y:44.6}, seed:19, pr:[110,6]},
+  {n:'Тяга штанги в нахилі', w:77.5, p:{m:3.4, q:9.6,  y:27.9}, seed:31, pr:[80,8]},
+  {n:'Румунська тяга',       w:90,   p:{m:4.7, q:11.4, y:31.2}, seed:53, pr:[95,8]},
+  {n:'Жим стоячи',           w:47.5, p:{m:0,   q:1.1,  y:6.3},  seed:71, pr:[50,6]}
+];
+const HISTORY = [
+  {d:'4 вересня', day:'День A', t:'1:04', v:'6 617 кг'},
+  {d:'2 вересня', day:'День C', t:'1:12', v:'9 180 кг'},
+  {d:'31 серпня', day:'День B', t:'0:58', v:'7 420 кг'},
+  {d:'29 серпня', day:'День A', t:'1:06', v:'6 240 кг'},
+  {d:'27 серпня', day:'День C', t:'1:15', v:'9 040 кг'}
+];
+const CATALOG = [
+  {n:'Жим лежачи',             g:'Груди', e:'Штанга'},
+  {n:'Жим гантелей під кутом', g:'Груди', e:'Гантелі'},
+  {n:'Розводка в кросовері',   g:'Груди', e:'Блок'},
+  {n:'Віджимання на брусах',   g:'Груди', e:'Вага тіла'},
+  {n:'Хаммер на груди',        g:'Груди', e:'Тренажер', mine:true},
+  {n:'Жим у Сміті',            g:'Груди', e:'Тренажер', mine:true},
+  {n:'Жим стоячи',             g:'Плечі', e:'Штанга'},
+  {n:'Махи в сторони',         g:'Плечі', e:'Гантелі'},
+  {n:'Тяга штанги в нахилі',   g:'Спина', e:'Штанга'},
+  {n:'Підтягування',           g:'Спина', e:'Вага тіла'},
+  {n:'Тяга верхнього блока',   g:'Спина', e:'Блок'},
+  {n:'Присід зі штангою',      g:'Ноги',  e:'Штанга'},
+  {n:'Румунська тяга',         g:'Ноги',  e:'Штанга'},
+  {n:'Випади з гантелями',     g:'Ноги',  e:'Гантелі'},
+  {n:'Французький жим',        g:'Руки',  e:'Штанга'},
+  {n:'Згинання на біцепс',     g:'Руки',  e:'Гантелі'}
+];
+const GROUPS = ['Усі','Груди','Спина','Плечі','Ноги','Руки'];
+const TABS = [
+  {k:'workout',   label:'Тренування', screen:'home',     d:'M4 9v6M20 9v6M7 6v12M17 6v12M7 12h10'},
+  {k:'progress',  label:'Прогрес',    screen:'progress', d:'M4 19V9M10 19V5M16 19v-7M22 19h-20'},
+  {k:'exercises', label:'Вправи',     screen:'catalog',  d:'M4 7h16M4 12h16M4 17h10'}
+];
+/* 4 вересня, День A. Hand-authored: this screen is about the detail. */
+const PAST = {
+  date:'4 вересня', day:'День A', sub:'4 вересня, середа',
+  time:'1:04', vol:'6 617', sets:20, cmp:'+6.0% проти минулого Дня A',
+  ex:[
+    {n:'Жим лежачи',           target:8,  sets:[[82.5,8],[82.5,8],[85,8],[85,6]], vol:2510, up:'+2.5 кг', pr:2},
+    {n:'Хаммер на груди',      target:10, sets:[[40,10],[40,10],[40,8]],          vol:1120, was:'Жим гантелей під кутом'},
+    {n:'Розводка в кросовері', target:12, sets:[[17.5,12],[17.5,12],[17.5,10]],   vol:595},
+    {n:'Жим стоячи',           target:6,  sets:[[47.5,6],[47.5,6],[47.5,5],[45,6]], vol:1078},
+    {n:'Махи в сторони',       target:15, sets:[[12,15],[12,15],[12,13]],         vol:516,  up:'+1 кг', pr:0},
+    {n:'Французький жим',      target:10, sets:[[27.5,10],[27.5,10],[27.5,9]],    vol:798}
+  ]
+};
+
+/* ================= helpers ================= */
+const fmt   = n => (Math.round(n*100)/100).toString().replace(/\.0+$/,'');
+const pad   = n => String(n).padStart(2,'0');
+const clock = s => Math.floor(s/60)+':'+pad(s%60);
+const thou  = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const esc   = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function pluralRecords(n){
+  const a = n%10, b = n%100;
+  if(a===1 && b!==11) return 'запис чекає';
+  if(a>=2 && a<=4 && (b<12 || b>14)) return 'записи чекають';
+  return 'записів чекають';
+}
+function pluralEx(n){
+  const a = n%10, b = n%100;
+  if(a===1 && b!==11) return 'вправа';
+  if(a>=2 && a<=4 && (b<12 || b>14)) return 'вправи';
+  return 'вправ';
+}
+function series(base, pct, n, seed){
+  const start = pct === 0 ? base*0.99 : base/(1+pct/100);
+  const out = []; let s = seed>>>0;
+  for(let i=0;i<n;i++){
+    s = (s*1664525 + 1013904223) >>> 0;
+    const jitter = ((s>>>16)/65535 - 0.5) * base * 0.02;
+    out.push(start + (base-start)*(i/(n-1)) + (i===n-1 ? 0 : jitter));
+  }
+  return out;
+}
+function sparkline(values, w, h, color){
+  const min = Math.min(...values), max = Math.max(...values), span = (max-min)||1;
+  const pts = values.map((v,i)=>{
+    const x = (i/(values.length-1))*(w-2)+1;
+    const y = h-1 - ((v-min)/span)*(h-2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" fill="none" aria-hidden="true">'+
+         '<polyline points="'+pts+'" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+/* charts: one series each, direct-labelled, no chartjunk */
+function lineChart(vals, unit){
+  const W=318, H=150, R=40, T=12, B=10;
+  const pw = W-R, ph = H-T-B;
+  const min = Math.min(...vals), max = Math.max(...vals), span = (max-min)||1;
+  const lo = min-span*0.25, hi = max+span*0.25, s = hi-lo;
+  const X = i => (i/(vals.length-1))*pw;
+  const Y = v => T + ph - ((v-lo)/s)*ph;
+  const pts  = vals.map((v,i)=> X(i).toFixed(1)+','+Y(v).toFixed(1));
+  const area = 'M'+pts.join(' L')+' L'+pw.toFixed(1)+','+(T+ph)+' L0,'+(T+ph)+' Z';
+  const grid = [max, (max+min)/2, min].map(v =>
+    '<line class="grid" x1="0" x2="'+pw+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/>'+
+    '<text class="vlab" x="'+(pw+9)+'" y="'+(Y(v)+3.5).toFixed(1)+'">'+fmt(Math.round(v*10)/10)+'</text>').join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Динаміка: '+unit+'">'+
+         grid+
+         '<path class="area" d="'+area+'"/>'+
+         '<polyline class="line" points="'+pts.join(' ')+'"/>'+
+         '<circle class="dot" cx="'+X(vals.length-1).toFixed(1)+'" cy="'+Y(vals[vals.length-1]).toFixed(1)+'" r="4"/>'+
+         '</svg>';
+}
+function barChart(vals){
+  const W=318, H=110, R=40, T=8, B=6;
+  const pw = W-R, ph = H-T-B;
+  const max = Math.max(...vals);
+  const gap = 5, bw = (pw-gap*(vals.length-1))/vals.length;
+  const bars = vals.map((v,i)=>{
+    const h = Math.max(3, (v/max)*ph);
+    return '<rect class="bar'+(i===vals.length-1?' hi':'')+'" x="'+(i*(bw+gap)).toFixed(1)+
+           '" y="'+(T+ph-h).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="3"/>';
+  }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Обʼєм за тренування">'+bars+
+         '<text class="vlab" x="'+(pw+9)+'" y="'+(T+7)+'">'+thou(max)+'</text></svg>';
+}
+
+/* ================= app ================= */
+(function(){
+const root = document.querySelector('.v');
+const $  = s => root.querySelector(s);
+const $$ = s => [...root.querySelectorAll(s)];
+const F  = n => root.querySelector('[data-f="'+n+'"]');
+
+const cfg   = {rest:120, autofill:true, active:true, days:3, name:''};
+const ex    = PLAN.map(e => ({...e, done:[], sub:null}));
+ex[0].done.push({w:82.5, r:8, hit:true});          // the session is already under way
+const day   = PLAN.map(e => ({...e}));             // the day being edited
+const state = {i:0, w:0, reps:0, elapsed:770, restEnd:0, screen:'home', stack:[], detail:'Жим лежачи'};
+
+/* ---------- navigation ---------- */
+const TABS_HTML = TABS.map(t =>
+  '<button data-tab="'+t.k+'">'+
+  '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="'+t.d+'"/></svg>'+
+  '<span>'+t.label+'</span></button>').join('');
+$$('[data-tabs]').forEach(nav => nav.innerHTML = TABS_HTML);
+
+const ROOTS = ['home','progress','catalog','empty'];
+function show(name, push){
+  if(push && state.screen !== name) state.stack.push(state.screen);
+  if(ROOTS.includes(name)) state.stack = [];
+  state.screen = name;
+  $$('.scr').forEach(s => s.toggleAttribute('data-on', s.dataset.screen === name));
+  const tab = name === 'progress' ? 'progress'
+            : (name === 'catalog' ? 'exercises' : 'workout');
+  $$('[data-tab]').forEach(b => b.toggleAttribute('data-on', b.dataset.tab === tab));
+  $$('.body').forEach(b => b.scrollTop = 0);
+  root.scrollTop = 0;   // the shell itself must never scroll
+  if(name === 'summary')   playSummary();
+  if(name === 'exdetail')  renderDetail(state.detail);
+  if(name === 'day')       renderDay();
+  if(name === 'newprogram')renderSlots();
+}
+function back(){ show(state.stack.pop() || 'home'); }
+
+/* ---------- workout ---------- */
+const list  = $('[data-ex-list]');
+const panel = $('[data-panel]');
+ex.forEach((e,i)=>{
+  const b = document.createElement('button');
+  b.className = 'exrow';
+  b.dataset.ex = i;
+  b.innerHTML = '<span><span class="nm" data-rowname></span></span><span class="mt" data-rowmeta></span>';
+  b.addEventListener('click', ()=> select(i));
+  list.insertBefore(b, panel);
+});
+
+function rowLabel(i){
+  const e = ex[i], row = $('[data-ex="'+i+'"]');
+  row.querySelector('[data-rowname]').textContent = e.sub || e.name;
+  row.querySelector('[data-rowmeta]').textContent =
+    e.done.length >= e.sets ? e.done.length+' / '+e.sets
+                            : e.sets+'×'+e.reps+' · '+fmt(e.w)+' кг';
+  row.toggleAttribute('data-done', e.done.length >= e.sets);
+}
+function select(i){
+  state.i = i;
+  const e = ex[i];
+  state.w = cfg.autofill ? (e.done.length ? e.done[e.done.length-1].w : e.w) : 0;
+  state.reps = cfg.autofill ? e.reps : 0;
+  $$('[data-ex]').forEach(r => r.hidden = (+r.dataset.ex === i));
+  $('[data-ex="'+i+'"]').after(panel);
+  fillPanel();
+}
+function fillPanel(){
+  const e = ex[state.i];
+  F('name').textContent = e.sub || e.name;
+  panel.toggleAttribute('data-swapped', !!e.sub);
+  if(e.sub) F('swapped').textContent = 'замість: ' + e.name;
+  F('setno').textContent = 'Підхід ' + Math.min(e.done.length+1, e.sets) + ' з ' + e.sets;
+  F('target').textContent = e.reps + ' повторень';
+  F('weight').textContent = fmt(state.w);
+  F('reps').textContent = state.reps;
+  F('stepdown').textContent = '−'+fmt(e.step);
+  F('stepup').textContent   = '+'+fmt(e.step);
+  renderTiles();
+  ex.forEach((_,i)=> rowLabel(i));
+  renderSegs();
+}
+function renderTiles(){
+  const e = ex[state.i], out = [];
+  for(let i=0;i<e.sets;i++){
+    const s = e.done[i];
+    out.push(s ? '<span class="tile"'+(s.hit?'':' data-miss')+'>'+fmt(s.w)+'×'+s.r+'</span>'
+               : '<span class="tile" data-pending>·</span>');
+  }
+  $('[data-tiles]').innerHTML = out.join('');
+}
+function renderSegs(){
+  $('[data-segs]').innerHTML = ex.map((e,i)=>
+    '<i'+(e.done.length>=e.sets?' data-done':'')+(i===state.i?' data-cur':'')+'></i>').join('');
+}
+
+/* steppers: feedback on pointer-down, then accelerating repeat while held */
+function bump(kind){
+  const e = ex[state.i];
+  if(kind === 'w-') state.w = Math.max(0, state.w - e.step);
+  if(kind === 'w+') state.w += e.step;
+  if(kind === 'r-') state.reps = Math.max(0, state.reps - 1);
+  if(kind === 'r+') state.reps += 1;
+  F('weight').textContent = fmt(state.w);
+  F('reps').textContent = state.reps;
+}
+$$('[data-act]').forEach(btn=>{
+  const kind = btn.dataset.act;
+  if(!/^[wr][-+]$/.test(kind)) return;
+  let hold, delay;
+  const stop = ()=> clearTimeout(hold);
+  btn.addEventListener('pointerdown', e=>{
+    btn.setPointerCapture(e.pointerId);
+    bump(kind);
+    delay = 110;
+    hold = setTimeout(function run(){
+      bump(kind);
+      delay = Math.max(45, delay - 8);
+      hold = setTimeout(run, delay);
+    }, 420);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(t => btn.addEventListener(t, stop));
+});
+
+const commitBtn = $('[data-commit]');
+const rest      = $('[data-rest]');
+const restFill  = $('[data-rest-fill]');
+let restAnim = null, restTick = null;
+
+function totalSets(){ return ex.reduce((a,e)=> a + e.done.length, 0); }
+function updateOffline(){
+  const n = totalSets();
+  $('[data-offline]').toggleAttribute('data-on', n >= 3);
+  F('offline-text').textContent = n + ' ' + pluralRecords(n) + ' на зʼєднання';
+}
+function commit(){
+  const e = ex[state.i];
+  if(e.done.length >= e.sets) return;
+  e.done.push({w:state.w, r:state.reps, hit: state.reps >= e.reps});
+  renderTiles();
+  const fresh = $('[data-tiles]').children[e.done.length-1];
+  if(fresh) fresh.setAttribute('data-fresh','');
+  rowLabel(state.i);
+  renderSegs();
+  updateOffline();
+  startRest();
+  if(e.done.length >= e.sets){
+    const next = ex.findIndex(x => x.done.length < x.sets);
+    if(next >= 0) setTimeout(()=> select(next), 600);
+  }
+}
+function startRest(){
+  commitBtn.setAttribute('data-hide','');
+  rest.setAttribute('data-on','');
+  state.restEnd = Date.now() + cfg.rest*1000;
+  restAnim?.cancel();
+  restFill.style.transform = 'scaleX(1)';
+  if(!reduceMotion()){
+    restAnim = restFill.animate([{transform:'scaleX(1)'},{transform:'scaleX(0)'}],
+      {duration: cfg.rest*1000, easing:'linear', fill:'forwards'});
+  }
+  clearInterval(restTick);
+  const paint = ()=>{
+    const left = Math.max(0, Math.round((state.restEnd - Date.now())/1000));
+    F('rest-time').textContent = clock(left);
+    if(left <= 0) stopRest();
+  };
+  paint();
+  restTick = setInterval(paint, 250);
+}
+function stopRest(){
+  clearInterval(restTick);
+  restAnim?.cancel();
+  rest.removeAttribute('data-on');
+  commitBtn.removeAttribute('data-hide');
+}
+
+/* ---------- swap sheet ---------- */
+$('[data-chips]').innerHTML = RECENT.map(n => '<button data-chip>'+n+'</button>').join('');
+const sheetInput = $('[data-sheet-input]');
+
+/* ---------- summary ---------- */
+function countTo(el, target, ms, format){
+  const t0 = performance.now();
+  (function step(now){
+    const p = Math.min(1, (now-t0)/ms);
+    el.textContent = format(Math.round(target*(1-Math.pow(1-p,3))));
+    if(p < 1) requestAnimationFrame(step);
+  })(t0);
+}
+function playSummary(){
+  $$('.rise').forEach(el=>{ el.style.animation='none'; void el.offsetWidth; el.style.animation=''; });
+  if(reduceMotion()){
+    F('s-vol').textContent = thou(6940); F('s-sets').textContent = '20';
+  } else {
+    countTo(F('s-vol'), 6940, 900, thou);
+    countTo(F('s-sets'), 20, 900, String);
+  }
+}
+
+/* ---------- progress ---------- */
+function renderPeriod(p){
+  F('p-sessions').textContent = PERIOD[p].s;
+  F('p-volume').textContent   = PERIOD[p].v;
+  F('p-records').textContent  = PERIOD[p].r;
+  const css = getComputedStyle(root);
+  const dim = css.getPropertyValue('--dim2').trim();
+  const acc = css.getPropertyValue('--acc').trim();
+  $('[data-exstats]').innerHTML = EXSTATS.map(s=>{
+    const pct = s.p[p], flat = pct === 0;
+    return '<button class="exstat" data-detail="'+esc(s.n)+'">'+
+      '<span><span class="nm">'+s.n+'</span><span class="kg">робоча '+fmt(s.w)+' кг</span></span>'+
+      sparkline(series(s.w, pct, 10, s.seed + p.charCodeAt(0)), 56, 22, flat ? dim : acc)+
+      '<span class="pc"'+(flat?' data-flat':'')+'>'+(flat ? '0%' : '+'+pct.toFixed(1)+'%')+'</span>'+
+      '</button>';
+  }).join('');
+}
+$('[data-history]').innerHTML = HISTORY.map((h,i) =>
+  '<button class="hrow" data-past="'+i+'" style="width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer">'+
+  '<span><span class="d" style="display:block">'+h.d+'</span>'+
+  '<span class="dd" style="display:block">'+h.day+'</span></span>'+
+  '<span class="r"><span style="display:block">'+h.t+'</span>'+
+  '<span style="display:block;margin-top:4px">'+h.v+'</span></span></button>').join('');
+renderPeriod('m');
+
+/* ---------- exercise detail ---------- */
+function detailFor(name){
+  const st   = EXSTATS.find(x=>x.n===name) || EXSTATS[0];
+  const plan = PLAN.find(p=>p.name===name);
+  const cat  = CATALOG.find(c=>c.n===name);
+  const target = plan ? plan.reps : 8;
+  const round  = v => Math.round(v/2.5)*2.5;
+  const w = series(st.w, st.p.y, 12, st.seed).map(round);
+  const v = w.map((x,i)=> Math.round((x*target*3.2 + (i%4)*35)/10)*10);
+  const dates = ['4 вересня','2 вересня','31 серпня','29 серпня'];
+  const log = dates.map((d,i)=>{
+    const base = w[11-i*2];
+    const sets = [
+      [base, target],
+      [base, target],
+      [base, i===0 ? target : target-1],
+      [i===0 ? base : round(base-2.5), target-2]
+    ];
+    return {d, sets, vol: Math.round(sets.reduce((a,s)=>a+s[0]*s[1],0))};
+  });
+  // the hand-authored session must not contradict the past-workout screen
+  const authored = PAST.ex.find(x => x.n === name);
+  if(authored){
+    log[0] = {d: PAST.date, sets: authored.sets, vol: authored.vol};
+    v[11] = authored.vol;
+  }
+  const [prW, prR] = st.pr;
+  return {
+    group: cat ? cat.g : 'Інше', gear: cat ? cat.e.toLowerCase() : 'без обладнання',
+    pr: fmt(prW)+' × '+prR, orm: (prW*(1+prR/30)).toFixed(1),
+    w, v, log, target,
+    growth: st.p.y
+  };
+}
+function renderDetail(name){
+  const d = detailFor(name);
+  F('xd-name').textContent = name;
+  F('xd-meta').textContent = d.group + ' · ' + d.gear;
+  F('xd-pr').textContent   = d.pr;
+  F('xd-1rm').textContent  = d.orm;
+
+  $('[data-chart-weight]').innerHTML =
+    '<div class="ct"><span class="h">Робоча вага, кг</span>'+
+    '<span class="now">'+fmt(d.w[11])+'</span>'+
+    '<span class="delta">+'+d.growth.toFixed(1)+'%</span></div>'+
+    lineChart(d.w, 'робоча вага в кілограмах')+
+    '<div class="xrow"><span>рік тому</span><span>сьогодні</span></div>';
+
+  $('[data-chart-volume]').innerHTML =
+    '<div class="ct"><span class="h">Обʼєм за тренування, кг</span>'+
+    '<span class="now">'+thou(d.v[11])+'</span></div>'+
+    barChart(d.v)+
+    '<div class="xrow"><span>12 останніх тренувань</span><span>останнє</span></div>';
+
+  $('[data-setlog]').innerHTML = d.log.map(s =>
+    '<div class="dategroup"><div class="dh"><span class="d">'+s.d+'</span>'+
+    '<span class="vol">'+thou(s.vol)+' кг</span></div>'+
+    '<div class="setline">'+s.sets.map(([w,r]) =>
+      '<span class="setchip"'+(r < d.target ? ' data-miss' : '')+'>'+fmt(w)+' × '+r+'</span>').join('')+
+    '</div></div>').join('');
+}
+
+/* ---------- past workout ---------- */
+$('[data-pastlist]').innerHTML = PAST.ex.map(e =>
+  '<div class="pastex">'+
+    '<div class="ph"><span><span class="nm">'+e.n+'</span>'+
+      (e.was ? '<span class="subnote">заміна: '+e.was+'</span>' : '')+
+    '</span></div>'+
+    '<div class="setline">'+e.sets.map(([w,r],i)=>
+      '<span class="setchip"'+(r < e.target ? ' data-miss' : (e.pr === i ? ' data-pr' : ''))+'>'+
+      fmt(w)+' × '+r+'</span>').join('')+'</div>'+
+    '<div class="tot"><span>'+thou(e.vol)+' кг обʼєму</span>'+
+      (e.up ? '<span class="up">робоча вага '+e.up+'</span>' : '<span>робоча вага без змін</span>')+
+    '</div>'+
+  '</div>').join('');
+F('pw-date').textContent = PAST.date;
+F('pw-day').textContent  = PAST.day;
+F('pw-sub').textContent  = PAST.sub;
+F('pw-time').textContent = PAST.time;
+F('pw-vol').textContent  = PAST.vol;
+F('pw-sets').textContent = PAST.sets;
+F('pw-cmp').textContent  = PAST.cmp;
+
+/* ---------- catalog ---------- */
+$('[data-filters]').innerHTML = GROUPS.map((g,i)=>
+  '<button data-group="'+g+'"'+(i===0?' data-on':'')+'>'+g+'</button>').join('');
+let catGroup = 'Усі', catQuery = '';
+function renderCatalog(){
+  const q = catQuery.trim().toLowerCase();
+  const rows = CATALOG.filter(c =>
+    (catGroup === 'Усі' || c.g === catGroup) && (!q || c.n.toLowerCase().includes(q)));
+  $('[data-catlist]').innerHTML = rows.length
+    ? rows.map(c => '<button class="exrow">'+
+        '<span class="catname"><span class="nm">'+c.n+'</span>'+
+        (c.mine ? '<span class="mine">моя</span>' : '')+'</span>'+
+        '<span class="mt">'+c.e+'</span></button>').join('')
+    : '<div class="nores">Нічого не знайшлося. Впиши свою назву, і вона стане твоєю вправою.</div>';
+}
+$('[data-search]').addEventListener('input', e=>{ catQuery = e.target.value; renderCatalog(); });
+$('[data-filters]').addEventListener('click', e=>{
+  const b = e.target.closest('[data-group]'); if(!b) return;
+  catGroup = b.dataset.group;
+  $$('[data-group]').forEach(x => x.toggleAttribute('data-on', x === b));
+  renderCatalog();
+});
+renderCatalog();
+
+/* ---------- program day editor: reorder + real number entry ---------- */
+const dayHost = $('[data-day-list]');
+function renderDay(){
+  dayHost.innerHTML = day.map((e,i)=>
+    '<div class="dayex" data-row="'+i+'">'+
+      '<span class="grip" data-grip aria-label="Перетягнути">'+
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8h.01M8 12h.01M8 16h.01M16 8h.01M16 12h.01M16 16h.01"/></svg>'+
+      '</span>'+
+      '<button class="info" data-edit="'+i+'">'+
+        '<span class="nm">'+e.name+'</span>'+
+        '<span class="mt">'+e.sets+' × '+e.reps+' · крок '+fmt(e.step)+' кг</span>'+
+      '</button>'+
+      '<button class="kill" data-del="'+i+'" aria-label="Прибрати вправу">'+
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'+
+      '</button>'+
+    '</div>'+
+    '<div class="editor" data-editor="'+i+'">'+
+      '<span class="numfield"><label>Підходи</label>'+
+        '<input type="number" inputmode="numeric" min="1" max="10" step="1" data-set="sets" data-i="'+i+'" value="'+e.sets+'"></span>'+
+      '<span class="numfield"><label>Повтори</label>'+
+        '<input type="number" inputmode="numeric" min="1" max="50" step="1" data-set="reps" data-i="'+i+'" value="'+e.reps+'"></span>'+
+      '<span class="numfield"><label>Крок, кг</label>'+
+        '<input type="number" inputmode="decimal" min="0.5" max="20" step="0.5" data-set="step" data-i="'+i+'" value="'+fmt(e.step)+'"></span>'+
+    '</div>').join('');
+}
+dayHost.addEventListener('click', e=>{
+  const ed = e.target.closest('[data-edit]');
+  if(ed){
+    const box = dayHost.querySelector('[data-editor="'+ed.dataset.edit+'"]');
+    const open = box.hasAttribute('data-open');
+    dayHost.querySelectorAll('.editor').forEach(x => x.removeAttribute('data-open'));
+    if(!open) box.setAttribute('data-open','');
+    return;
+  }
+  const del = e.target.closest('[data-del]');
+  if(del){ day.splice(+del.dataset.del, 1); renderDay(); }
+});
+dayHost.addEventListener('input', e=>{
+  const inp = e.target.closest('[data-set]'); if(!inp) return;
+  const i = +inp.dataset.i, v = parseFloat(inp.value);
+  if(!isFinite(v) || v <= 0) return;
+  day[i][inp.dataset.set] = v;
+  const row = dayHost.querySelector('[data-row="'+i+'"] .mt');
+  row.textContent = day[i].sets+' × '+day[i].reps+' · крок '+fmt(day[i].step)+' кг';
+});
+
+/* drag to reorder: 1:1 tracking, swap when the pointer crosses a neighbour */
+let drag = null;
+dayHost.addEventListener('pointerdown', e=>{
+  const grip = e.target.closest('[data-grip]'); if(!grip) return;
+  const row = grip.closest('.dayex');
+  dayHost.querySelectorAll('.editor').forEach(x => x.removeAttribute('data-open'));
+  grip.setPointerCapture(e.pointerId);
+  drag = {row, grip, startY:e.clientY};
+  row.setAttribute('data-drag','');
+  row.style.transition = 'none';
+});
+dayHost.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  const rows = [...dayHost.querySelectorAll('.dayex')];
+  const idx  = rows.indexOf(drag.row);
+  const prev = rows[idx-1], next = rows[idx+1];
+  const y = e.clientY;
+  if(prev && y < prev.getBoundingClientRect().top + prev.offsetHeight/2){
+    flip(prev, ()=> dayHost.insertBefore(drag.row, prev));
+  } else if(next && y > next.getBoundingClientRect().bottom - next.offsetHeight/2){
+    flip(next, ()=> dayHost.insertBefore(drag.row, next.nextSibling));
+  }
+  drag.row.style.transform = 'translateY('+(y - drag.startY)+'px)';
+});
+function flip(el, mutate){
+  const a = el.getBoundingClientRect().top;
+  const before = drag.row.offsetTop;
+  mutate();
+  drag.startY += drag.row.offsetTop - before;
+  const b = el.getBoundingClientRect().top;
+  if(reduceMotion()) return;
+  el.removeAttribute('data-shift');
+  el.style.transition = 'none';
+  el.style.transform = 'translateY('+(a-b)+'px)';
+  requestAnimationFrame(()=>{
+    el.style.transition = '';
+    el.setAttribute('data-shift','');
+    el.style.transform = '';
+  });
+}
+function endDrag(){
+  if(!drag) return;
+  const row = drag.row;
+  row.removeAttribute('data-drag');
+  row.style.transition = 'transform 200ms var(--ease-out)';
+  row.style.transform = '';
+  const order = [...dayHost.querySelectorAll('.dayex')].map(r => day[+r.dataset.row]);
+  drag = null;
+  setTimeout(()=>{ day.length = 0; day.push(...order); renderDay(); }, 200);
+}
+dayHost.addEventListener('pointerup', endDrag);
+dayHost.addEventListener('pointercancel', endDrag);
+
+/* ---------- configuration form ---------- */
+const DAYNAMES = ['День A','День B','День C','День D','День E'];
+const SLOTFILL = [
+  {n:'День A', m:'Груди, плечі, трицепс', c:6},
+  {n:'День B', m:'Спина, біцепс',         c:6},
+  {n:'День C', m:'Ноги, кор',             c:6},
+  {n:'День D', m:'',                      c:0},
+  {n:'День E', m:'',                      c:0}
+];
+function renderSlots(){
+  $('[data-slots]').innerHTML = SLOTFILL.slice(0, cfg.days).map((s,i)=>
+    '<button class="slot" data-go="day">'+
+      '<span class="k">'+String.fromCharCode(65+i)+'</span>'+
+      '<span><span class="nm">'+s.n+'</span>'+
+        (s.c ? '<span class="mt">'+s.m+' · '+s.c+' '+pluralEx(s.c)+'</span>'
+             : '<span class="mt" data-empty>Порожній, додай вправи</span>')+
+      '</span>'+
+      '<span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>'+
+    '</button>').join('');
+}
+$('[data-daycount]').addEventListener('click', e=>{
+  const b = e.target.closest('[data-days]'); if(!b) return;
+  cfg.days = +b.dataset.days;
+  $$('[data-days]').forEach(x => x.toggleAttribute('data-on', x === b));
+  renderSlots();
+});
+const restField = $('[data-form="rest"]');
+$$('[data-rest-step]').forEach(b => b.addEventListener('click', ()=>{
+  cfg.rest = Math.min(300, Math.max(30, cfg.rest + (+b.dataset.restStep)));
+  restField.textContent = clock(cfg.rest);
+}));
+$$('[data-toggle]').forEach(b => b.addEventListener('click', ()=>{
+  const on = !b.hasAttribute('data-on');
+  b.toggleAttribute('data-on', on);
+  cfg[b.dataset.toggle] = on;
+}));
+function saveProgram(){
+  const name = $('[data-form="name"]').value.trim();
+  const err  = $('[data-form-err]');
+  if(!name){
+    err.textContent = 'Дай програмі назву, інакше ти не відрізниш її від інших у списку.';
+    err.setAttribute('data-on','');
+    $('[data-form="name"]').focus();
+    return;
+  }
+  err.removeAttribute('data-on');
+  cfg.name = name;
+  show('program');
+}
+
+/* ---------- one delegated handler ---------- */
+root.addEventListener('click', e=>{
+  if(e.target.closest('[data-back]')){ back(); return; }
+
+  const chip = e.target.closest('[data-chip]');
+  if(chip){ sheetInput.value = chip.textContent; return; }
+
+  const det = e.target.closest('[data-detail]');
+  if(det){ state.detail = det.dataset.detail; show('exdetail', true); return; }
+
+  if(e.target.closest('[data-past]')){ show('past', true); return; }
+
+  const tab = e.target.closest('[data-tab]');
+  if(tab){ show(TABS.find(x => x.k === tab.dataset.tab).screen); return; }
+
+  const per = e.target.closest('[data-period]');
+  if(per){
+    $$('[data-period]').forEach(b => b.toggleAttribute('data-on', b === per));
+    renderPeriod(per.dataset.period);
+    return;
+  }
+
+  const go = e.target.closest('[data-go]');
+  if(go){ show(go.dataset.go, true); return; }
+
+  const act = e.target.closest('[data-act]');
+  if(!act) return;
+  switch(act.dataset.act){
+    case 'commit':      commit(); break;
+    case 'skip':        stopRest(); break;
+    case 'swap':        root.setAttribute('data-sheet',''); setTimeout(()=>sheetInput.focus({preventScroll:true}), 340); break;
+    case 'close-sheet': root.removeAttribute('data-sheet'); break;
+    case 'save-program':saveProgram(); break;
+    case 'apply-swap': {
+      const v = sheetInput.value.trim();
+      if(v){ ex[state.i].sub = v; fillPanel(); }
+      root.removeAttribute('data-sheet');
+      sheetInput.value = '';
+      break;
+    }
+  }
+});
+
+setInterval(()=>{
+  state.elapsed++;
+  F('elapsed').textContent = clock(state.elapsed);
+}, 1000);
+
+restField.textContent = clock(cfg.rest);
+F('rest-time').textContent = clock(cfg.rest);
+select(0);
+updateOffline();
+renderSlots();
+})();
+</script>

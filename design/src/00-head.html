@@ -1,0 +1,49 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Трекер тренувань</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{
+  margin:0;
+  background:#0A0A0B;
+  font-family:"Onest",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow:hidden;
+}
+#app{position:fixed;inset:0;display:grid;place-items:center}
+.v{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  overflow:clip;          /* clip is unscrollable: a focus deep inside cannot pan the shell */
+  display:flex;
+  flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+/* On a desktop screen the app sits in a phone. On a phone it is the phone. */
+@media (min-width:640px) and (min-height:800px){
+  body{background:#131316}
+  #app{padding:20px}
+  .v{
+    width:390px;height:844px;
+    border-radius:44px;
+    box-shadow:0 0 0 10px #202024, 0 0 0 11px #37373d, 0 40px 90px rgba(0,0,0,.6);
+  }
+}
+</style>

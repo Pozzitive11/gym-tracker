@@ -1,0 +1,192 @@
+
+<style>
+/* ============================================================
+   VARIANT 1 - IRON   axis: tactile weight
+   Controls read as hardware. The number is the hero.
+   ============================================================ */
+.v-iron{
+  --bg:#0A0A0B; --surf:#141416; --surf2:#1C1C20; --line:#2A2A2F;
+  --text:#F4F4F5; --dim:#9A9AA3; --dim2:#75757F;
+  --acc:#D8FF3E; --acc-ink:#0A0A0B; --warn:#FF9F45;
+  background:var(--bg); color:var(--text);
+  font-family:"Onest",system-ui,sans-serif;
+}
+.v-iron .scr{display:none;flex:1;min-height:0;flex-direction:column}
+.v-iron .scr[data-on]{display:flex}
+.v-iron .top{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 18px) 20px 12px;display:flex;align-items:center;gap:12px}
+.v-iron .top h1{margin:0;font-family:"Unbounded",sans-serif;font-weight:700;font-size:19px;letter-spacing:-.02em}
+.v-iron .top .sub{color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
+.v-iron .body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 20px 24px}
+.v-iron .body::-webkit-scrollbar{display:none}
+
+.v-iron .icobtn{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border:0;border-radius:14px;background:var(--surf);color:var(--text);cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .icobtn:active{transform:scale(.94)}
+.v-iron .ghost{margin-left:auto;border:0;background:transparent;color:var(--dim);font:inherit;font-size:14px;font-weight:500;padding:8px 4px;cursor:pointer;transition:transform 140ms var(--ease-out),color 140ms ease}
+.v-iron .ghost:active{transform:scale(.96);color:var(--text)}
+
+/* home: plan card */
+.v-iron .plan{background:var(--surf);border-radius:24px;padding:22px 20px 20px;margin-top:4px}
+.v-iron .plan .kicker{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.v-iron .plan .day{font-family:"Unbounded",sans-serif;font-weight:800;font-size:34px;letter-spacing:-.03em;margin:10px 0 2px}
+.v-iron .plan .muscle{color:var(--dim);font-size:14px;margin-bottom:16px}
+.v-iron .plan .exlist{color:var(--dim);font-size:12.5px;line-height:1.65;margin-bottom:20px}
+.v-iron .start{width:100%;height:66px;border:0;border-radius:18px;background:var(--acc);color:var(--acc-ink);font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .start:active{transform:scale(.975)}
+
+/* home: week */
+.v-iron .week{display:flex;align-items:center;gap:12px;padding:22px 4px 20px;border-bottom:1px solid var(--line)}
+.v-iron .week .t{font-size:14px;color:var(--dim)}
+.v-iron .week .c{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.v-iron .bars{display:flex;gap:5px;margin-left:auto}
+.v-iron .bars i{width:16px;height:6px;border-radius:3px;background:var(--line)}
+.v-iron .bars i[data-done]{background:var(--acc)}
+
+/* home: programs */
+.v-iron .sect{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:22px 4px 10px}
+.v-iron .prog{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border:0;border-radius:18px;background:var(--surf);color:var(--text);font:inherit;margin-bottom:8px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .prog:active{transform:scale(.985)}
+.v-iron .prog .nm{display:block;font-weight:600;font-size:15px}
+.v-iron .prog .mt{display:block;color:var(--dim);font-size:12.5px;margin-top:3px}
+.v-iron .prog .tag{margin-left:auto;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--acc-ink);background:var(--acc);padding:5px 9px;border-radius:999px}
+.v-iron .prog[data-idle]{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.v-iron .addprog{width:100%;padding:16px;border:0;border-radius:18px;background:transparent;color:var(--dim);font:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:color 140ms ease}
+.v-iron .addprog:active{color:var(--text)}
+
+/* empty state */
+.v-iron [data-screen="empty"] .body{display:flex;flex-direction:column}
+.v-iron .empty{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 4px 60px}
+.v-iron .empty .glyph{width:64px;height:64px;border-radius:22px;background:var(--surf);display:grid;place-items:center;margin-bottom:24px;color:var(--acc)}
+.v-iron .empty h2{font-family:"Unbounded",sans-serif;font-weight:800;font-size:27px;line-height:1.2;letter-spacing:-.03em;margin:0 0 12px}
+.v-iron .empty p{color:var(--dim);font-size:14.5px;line-height:1.6;margin:0 0 28px;max-width:30ch}
+
+/* tabs */
+.v-iron .tabs{flex:0 0 auto;display:flex;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);border-top:1px solid var(--line);background:rgba(10,10,11,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.v-iron .tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0;border:0;background:transparent;color:var(--dim2);font:inherit;font-size:10.5px;font-weight:500;cursor:pointer;transition:color 140ms ease}
+.v-iron .tabs button[data-on]{color:var(--acc)}
+.v-iron .tabs button:active{transform:scale(.95)}
+
+/* workout */
+.v-iron .segs{display:flex;gap:4px;padding:0 20px 14px}
+.v-iron .segs i{flex:1;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-out)}
+.v-iron .segs i[data-done]{background:var(--dim2)}
+.v-iron .segs i[data-cur]{background:var(--acc)}
+.v-iron .offline{display:none;align-items:center;gap:9px;margin:0 20px 12px;padding:9px 14px;border-radius:12px;background:rgba(255,159,69,.12);color:var(--warn);font-size:12.5px;font-weight:500}
+.v-iron .offline[data-on]{display:flex}
+.v-iron .offline .dot{width:6px;height:6px;border-radius:3px;background:var(--warn);flex:0 0 auto}
+
+.v-iron .exrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:15px 16px;border:0;border-radius:16px;background:transparent;color:var(--text);font:inherit;cursor:pointer;transition:background 140ms ease,transform 140ms var(--ease-out)}
+.v-iron .exrow:active{transform:scale(.985)}
+.v-iron .exrow .nm{display:block;font-size:14.5px;font-weight:500}
+.v-iron .exrow .mt{margin-left:auto;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.v-iron .exrow[data-done] .nm{color:var(--dim2)}
+.v-iron .exrow[data-done] .mt{color:var(--acc)}
+
+/* the panel */
+.v-iron .panel{background:var(--surf);border-radius:24px;padding:20px;margin:6px 0 10px}
+.v-iron .panel .pname{font-family:"Unbounded",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;line-height:1.25}
+.v-iron .panel .swapped{display:none;margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.v-iron .panel[data-swapped] .swapped{display:block}
+.v-iron .panel .psub{color:var(--dim);font-size:13px;margin-top:5px;font-variant-numeric:tabular-nums}
+
+.v-iron .dial{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:20px}
+.v-iron .dial .val{flex:1;text-align:center;min-width:0}
+.v-iron .dial .val .n{font-family:"Unbounded",sans-serif;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;font-size:58px;line-height:1;display:block}
+.v-iron .dial .val .u{display:block;margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.v-iron .step{width:74px;height:74px;flex:0 0 auto;border:0;border-radius:20px;background:var(--surf2);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms var(--ease-out),background 120ms ease}
+.v-iron .step:active{transform:scale(.93);background:#26262c}
+.v-iron .dial.reps .val .n{font-size:42px}
+.v-iron .dial.reps .step{width:60px;height:60px;font-size:13px}
+
+.v-iron .commit{width:100%;height:72px;margin-top:20px;border:0;border-radius:20px;background:var(--acc);color:var(--acc-ink);font-family:"Unbounded",sans-serif;font-weight:800;font-size:16px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .commit:active{transform:scale(.975)}
+.v-iron .commit[data-hide]{display:none}
+
+/* rest timer takes the commit button's place */
+.v-iron .rest{display:none;position:relative;overflow:hidden;align-items:center;gap:14px;height:72px;margin-top:20px;padding:0 20px;border-radius:20px;background:var(--surf2)}
+.v-iron .rest[data-on]{display:flex}
+.v-iron .rest .fill{position:absolute;inset:0;transform-origin:left center;background:rgba(216,255,62,.15)}
+.v-iron .rest .lbl{position:relative;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.v-iron .rest .tm{position:relative;font-family:"Unbounded",sans-serif;font-weight:700;font-size:26px;font-variant-numeric:tabular-nums;color:var(--acc)}
+.v-iron .rest .skip{position:relative;margin-left:auto;border:0;background:transparent;color:var(--dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:10px 0}
+.v-iron .rest .skip:active{color:var(--text)}
+
+.v-iron .tiles{display:flex;gap:8px;margin-top:16px}
+.v-iron .tile{flex:1;height:52px;display:grid;place-items:center;border-radius:14px;background:var(--surf2);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.v-iron .tile[data-pending]{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--dim2)}
+.v-iron .tile[data-miss]{color:var(--warn);box-shadow:inset 0 0 0 1px rgba(255,159,69,.45);background:transparent}
+.v-iron .tile[data-fresh]{animation:ironTile 260ms var(--ease-out) both}
+@keyframes ironTile{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.v-iron .swaplink{width:100%;margin-top:14px;padding:10px;border:0;background:transparent;color:var(--dim);font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.v-iron .swaplink:active{color:var(--text)}
+
+/* summary */
+.v-iron .sum{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 22px 20px;overflow-y:auto}
+.v-iron .sum .badge{align-self:flex-start;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--acc-ink);background:var(--acc);padding:6px 12px;border-radius:999px}
+.v-iron .sum h2{font-family:"Unbounded",sans-serif;font-weight:800;font-size:30px;line-height:1.15;letter-spacing:-.035em;margin:18px 0 24px}
+.v-iron .sumgrid{display:flex;gap:10px}
+.v-iron .sumgrid div{flex:1;background:var(--surf);border-radius:18px;padding:16px 14px}
+.v-iron .sumgrid .n{font-family:"Unbounded",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .sumgrid .l{margin-top:6px;font-size:11px;color:var(--dim);font-weight:500}
+.v-iron .grow{display:flex;align-items:center;gap:9px;margin-top:12px;padding:14px 16px;border-radius:16px;background:rgba(216,255,62,.1);color:var(--acc);font-size:13.5px;font-weight:600}
+.v-iron .recs{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.v-iron .rec{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--surf)}
+.v-iron .rec .rl{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.v-iron .rec .rn{display:block;font-size:14px;font-weight:500;margin-top:3px}
+.v-iron .rec .rv{margin-left:auto;font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.v-iron .sum .done{width:100%;height:60px;margin-top:22px;border:0;border-radius:18px;background:var(--surf2);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .sum .done:active{transform:scale(.975)}
+.v-iron .rise{opacity:0;transform:translateY(14px);animation:ironRise 440ms var(--ease-out) forwards;animation-delay:var(--d,0ms)}
+@keyframes ironRise{to{opacity:1;transform:translateY(0)}}
+
+/* progress */
+.v-iron .stats{display:flex;padding:6px 0 20px;border-bottom:1px solid var(--line)}
+.v-iron .stats div{flex:1;min-width:0}
+.v-iron .stats div+div{padding-left:14px;border-left:1px solid var(--line)}
+.v-iron .stats .n{font-family:"Unbounded",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .stats .l{margin-top:5px;font-size:11px;color:var(--dim)}
+.v-iron .segd{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--surf);margin:18px 0}
+.v-iron .segd button{flex:1;height:36px;border:0;border-radius:11px;background:transparent;color:var(--dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:color 140ms ease,background 140ms ease}
+.v-iron .segd button[data-on]{background:var(--surf2);color:var(--text)}
+.v-iron .stall{display:flex;gap:12px;padding:16px;border-radius:18px;background:rgba(255,159,69,.1);box-shadow:inset 0 0 0 1px rgba(255,159,69,.22)}
+.v-iron .stall .st{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.v-iron .stall .sb{display:block;margin-top:6px;font-size:13.5px;line-height:1.5;color:var(--text)}
+.v-iron .exstat{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:15px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;cursor:pointer}
+.v-iron .exstat .nm{display:block;font-size:14px;font-weight:500}
+.v-iron .exstat .kg{display:block;font-size:12px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
+.v-iron .exstat .spark{margin-left:auto;flex:0 0 auto}
+.v-iron .exstat .pc{width:50px;text-align:right;font-size:13px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums}
+.v-iron .exstat .pc[data-flat]{color:var(--dim2)}
+.v-iron .hrow{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line)}
+.v-iron .hrow .d{font-size:13.5px;font-weight:500}
+.v-iron .hrow .dd{font-size:12px;color:var(--dim);margin-top:3px}
+.v-iron .hrow .r{margin-left:auto;text-align:right;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* swap sheet */
+.v-iron .scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity 260ms var(--ease-out)}
+.v-iron .sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surf);border-radius:28px 28px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform 340ms var(--ease-drawer)}
+.v-iron[data-sheet] .scrim{opacity:1;pointer-events:auto}
+.v-iron[data-sheet] .sheet{transform:translateY(0)}
+.v-iron .sheet h3{font-family:"Unbounded",sans-serif;font-weight:700;font-size:18px;margin:0 0 4px}
+.v-iron .sheet p{color:var(--dim);font-size:13px;margin:0 0 18px;line-height:1.5}
+.v-iron .sheet input{width:100%;height:56px;padding:0 16px;border:0;border-radius:16px;background:var(--surf2);color:var(--text);font:inherit;font-size:16px;outline:none;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow 140ms ease}
+.v-iron .sheet input:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+.v-iron .sheet input::placeholder{color:var(--dim2)}
+.v-iron .chiplbl{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim2);margin:18px 0 10px}
+.v-iron .chips{display:flex;flex-wrap:wrap;gap:8px}
+.v-iron .chips button{padding:11px 14px;border:0;border-radius:999px;background:var(--surf2);color:var(--text);font:inherit;font-size:13px;cursor:pointer;transition:transform 120ms var(--ease-out)}
+.v-iron .chips button:active{transform:scale(.95)}
+.v-iron .sheet .apply{width:100%;height:60px;margin-top:20px;border:0;border-radius:18px;background:var(--acc);color:var(--acc-ink);font-family:"Unbounded",sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .sheet .apply:active{transform:scale(.975)}
+
+@media (hover:hover) and (pointer:fine){
+  .v-iron .exrow:hover{background:var(--surf)}
+  .v-iron .step:hover{background:#26262c}
+}
+@media (prefers-reduced-motion: reduce){
+  .v-iron .rise{animation:ironFade 200ms ease forwards}
+  .v-iron .tile[data-fresh]{animation:ironFade 200ms ease both}
+  .v-iron .sheet{transition:opacity 200ms ease;transform:none;opacity:0}
+  .v-iron[data-sheet] .sheet{opacity:1}
+}
+@keyframes ironFade{from{opacity:0}to{opacity:1;transform:none}}
+</style>

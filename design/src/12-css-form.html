@@ -1,0 +1,54 @@
+
+<style>
+/* ============================================================
+   IRON - configuration form: new / edit program
+   Calm mode: sitting at home. Denser than the gym screens,
+   but every hit target still clears 48px.
+   ============================================================ */
+.v-iron .field{margin-top:6px;margin-bottom:18px}
+.v-iron .field label{display:block;margin-bottom:9px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.v-iron .field input[type="text"]{width:100%;height:58px;padding:0 16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;font-size:16px;font-weight:500;outline:none;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow 140ms ease}
+.v-iron .field input[type="text"]:focus{box-shadow:inset 0 0 0 2px var(--acc)}
+.v-iron .field input[type="text"]::placeholder{color:var(--dim2)}
+.v-iron .hint{margin-top:9px;font-size:12.5px;line-height:1.55;color:var(--dim)}
+
+/* rest-between-sets stepper, mirrors the gym control so the mapping is obvious */
+.v-iron .restpick{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:var(--surf)}
+.v-iron .restpick button{width:56px;height:56px;flex:0 0 auto;border:0;border-radius:14px;background:var(--surf2);color:var(--text);font-family:"Unbounded",sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform 120ms var(--ease-out),background 120ms ease}
+.v-iron .restpick button:active{transform:scale(.93);background:#26262c}
+.v-iron .restpick .cur{flex:1;text-align:center}
+.v-iron .restpick .cur .n{display:block;font-family:"Unbounded",sans-serif;font-weight:800;font-size:28px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.v-iron .restpick .cur .u{display:block;margin-top:4px;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+/* switch */
+.v-iron .switchrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;cursor:pointer;transition:background 140ms ease}
+.v-iron .switchrow .t{display:block;font-size:14.5px;font-weight:500}
+.v-iron .switchrow .s{display:block;margin-top:4px;font-size:12.5px;color:var(--dim);line-height:1.5}
+.v-iron .switchrow .sw{margin-left:auto;flex:0 0 auto;position:relative;width:52px;height:32px;border-radius:999px;background:var(--surf2);transition:background 180ms var(--ease-out)}
+.v-iron .switchrow .sw::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:999px;background:var(--dim);transition:transform 180ms var(--ease-out),background 180ms var(--ease-out)}
+.v-iron .switchrow[data-on] .sw{background:var(--acc)}
+.v-iron .switchrow[data-on] .sw::after{transform:translateX(20px);background:var(--acc-ink)}
+
+/* day slots being configured */
+.v-iron .slot{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border:0;border-radius:16px;background:var(--surf);color:var(--text);font:inherit;margin-bottom:8px;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.v-iron .slot:active{transform:scale(.985)}
+.v-iron .slot .k{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:11px;background:var(--surf2);font-family:"Unbounded",sans-serif;font-weight:700;font-size:13px;color:var(--acc)}
+.v-iron .slot .nm{display:block;font-size:14.5px;font-weight:500}
+.v-iron .slot .mt{display:block;margin-top:4px;font-size:12.5px;color:var(--dim)}
+.v-iron .slot .mt[data-empty]{color:var(--warn)}
+.v-iron .slot .chev{margin-left:auto;flex:0 0 auto;color:var(--dim2)}
+
+.v-iron .formsect{padding:22px 4px 12px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.v-iron .formsect:first-child{padding-top:6px}
+.v-iron .err{display:none;margin-bottom:14px;padding:13px 15px;border-radius:14px;background:rgba(255,107,90,.1);box-shadow:inset 0 0 0 1px rgba(255,107,90,.28);color:#FF8877;font-size:13px;line-height:1.5}
+.v-iron .err[data-on]{display:block}
+.v-iron .start[disabled]{opacity:.4;pointer-events:none}
+
+@media (hover:hover) and (pointer:fine){
+  .v-iron .slot:hover{background:var(--surf2)}
+  .v-iron .switchrow:hover{background:var(--surf2)}
+}
+@media (prefers-reduced-motion: reduce){
+  .v-iron .switchrow .sw,.v-iron .switchrow .sw::after{transition:background 160ms ease}
+}
+</style>

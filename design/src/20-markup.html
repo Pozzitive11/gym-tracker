@@ -1,0 +1,354 @@
+
+<div id="app"><div class="v v-iron">
+
+  <!-- ==================== 1. ГОЛОВНА ==================== -->
+  <section class="scr" data-screen="home" data-on>
+    <header class="top">
+      <div>
+        <h1>Верх / Низ 4&times;</h1>
+        <div class="sub">середа, 6 вересня</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="plan">
+        <div class="kicker">наступне за планом</div>
+        <div class="day">День A</div>
+        <div class="muscle">Груди, плечі, трицепс</div>
+        <div class="exlist">Жим лежачи, Жим гантелей під кутом, Розводка в кросовері, Жим стоячи, Махи в сторони, Французький жим</div>
+        <button class="start" data-go="workout">Почати тренування</button>
+      </div>
+
+      <div class="week">
+        <span class="t">Цей тиждень</span>
+        <span class="bars"><i data-done></i><i data-done></i><i></i><i></i></span>
+        <span class="c">2 з 4</span>
+      </div>
+
+      <div class="sect">Програми</div>
+      <button class="prog" data-go="program">
+        <span><span class="nm">Верх / Низ 4&times;</span><span class="mt">3 дні &middot; 18 вправ</span></span>
+        <span class="tag">активна</span>
+      </button>
+      <button class="prog" data-idle data-go="program">
+        <span><span class="nm">Силовий блок 5&times;5</span><span class="mt">3 дні &middot; 9 вправ</span></span>
+      </button>
+      <button class="prog" data-idle data-go="program">
+        <span><span class="nm">Домашній мінімум</span><span class="mt">2 дні &middot; 11 вправ</span></span>
+      </button>
+      <button class="addprog" data-go="newprogram">+ Нова програма</button>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== СТАН: ПОРОЖНЬО ==================== -->
+  <section class="scr" data-screen="empty">
+    <header class="top"><h1>Тренування</h1></header>
+    <div class="body">
+      <div class="empty">
+        <div class="glyph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6M20 9v6M7 6v12M17 6v12M7 12h10"/></svg></div>
+        <h2>Тут поки порожньо</h2>
+        <p>Склади програму вдома, і в залі залишиться тільки тиснути кнопки. Це займе кілька хвилин.</p>
+        <button class="start" data-go="newprogram">Створити програму</button>
+      </div>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== 2. ПРОГРАМА ==================== -->
+  <section class="scr" data-screen="program">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>Верх / Низ 4&times;</h1>
+        <div class="sub">3 дні &middot; 18 вправ</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="sect">Дні</div>
+      <button class="navrow" data-go="day">
+        <span><span class="nm">День A</span><span class="mt">Груди, плечі, трицепс &middot; 6 вправ</span></span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+      <button class="navrow" data-go="day">
+        <span><span class="nm">День B</span><span class="mt">Спина, біцепс &middot; 6 вправ</span></span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+      <button class="navrow" data-go="day">
+        <span><span class="nm">День C</span><span class="mt">Ноги, кор &middot; 6 вправ</span></span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+
+      <div class="sect">Програма</div>
+      <div class="actions">
+        <button>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Зробити активною
+        </button>
+        <button>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M14 6l4 4"/></svg>
+          Перейменувати
+        </button>
+        <button data-danger>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+          Видалити програму
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== КОНФІГУРАЦІЯ: НОВА ПРОГРАМА ==================== -->
+  <section class="scr" data-screen="newprogram">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>Нова програма</h1>
+        <div class="sub">Налаштуй один раз, далі тільки тренуйся</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="err" data-form-err></div>
+
+      <div class="field">
+        <label for="np-name">Назва</label>
+        <input id="np-name" type="text" data-form="name" placeholder="Наприклад: Верх / Низ 4&times;" autocomplete="off">
+      </div>
+
+      <div class="formsect">Скільки днів у циклі</div>
+      <div class="segd" data-daycount>
+        <button data-days="2">2</button>
+        <button data-days="3" data-on>3</button>
+        <button data-days="4">4</button>
+        <button data-days="5">5</button>
+      </div>
+      <div class="hint">День це один похід у зал. Порядок вільний: застосунок просто пропонує наступний за списком.</div>
+
+      <div class="formsect">Дні</div>
+      <div data-slots></div>
+
+      <div class="formsect">Відпочинок між підходами</div>
+      <div class="restpick">
+        <button data-rest-step="-15" aria-label="Менше відпочинку">&minus;15</button>
+        <span class="cur"><span class="n" data-form="rest">2:00</span><span class="u">за замовчуванням</span></span>
+        <button data-rest-step="15" aria-label="Більше відпочинку">+15</button>
+      </div>
+      <div class="hint">Таймер стартує сам після кожного підходу. Для окремої вправи це значення можна перебити в редакторі дня.</div>
+
+      <div class="formsect">Ще</div>
+      <button class="switchrow" data-toggle="active" data-on>
+        <span><span class="t">Зробити активною</span><span class="s">Ця програма буде на головній і в кнопці старту</span></span>
+        <span class="sw"></span>
+      </button>
+      <button class="switchrow" data-toggle="autofill" data-on style="margin-top:8px">
+        <span><span class="t">Підставляти минулу вагу</span><span class="s">Вага й повтори з попереднього тренування вже стоять у полях</span></span>
+        <span class="sw"></span>
+      </button>
+    </div>
+    <div class="stickybar">
+      <button class="start" data-act="save-program">Зберегти програму</button>
+    </div>
+  </section>
+
+  <!-- ==================== 3. ДЕНЬ ПРОГРАМИ ==================== -->
+  <section class="scr" data-screen="day">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>День A</h1>
+        <div class="sub">Груди, плечі, трицепс</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="sect">Вправи по порядку</div>
+      <div data-day-list></div>
+      <button class="addprog" data-go="catalog">+ Додати вправу</button>
+    </div>
+    <div class="stickybar">
+      <button class="start" data-go="workout">Почати тренування</button>
+    </div>
+  </section>
+
+  <!-- ==================== 4. ТРЕНУВАННЯ ==================== -->
+  <section class="scr" data-screen="workout">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>День A</h1>
+        <div class="sub" data-f="elapsed">12:50</div>
+      </div>
+      <button class="ghost" data-go="summary">Завершити</button>
+    </header>
+    <div class="segs" data-segs></div>
+    <div class="offline" data-offline><span class="dot"></span><span data-f="offline-text"></span></div>
+    <div class="body">
+      <div data-ex-list>
+        <div class="panel" data-panel>
+          <div class="pname" data-f="name">Жим лежачи</div>
+          <div class="swapped" data-f="swapped"></div>
+          <div class="psub"><span data-f="setno">Підхід 2 з 4</span> &middot; ціль <span data-f="target">8 повторень</span></div>
+
+          <div class="dial">
+            <button class="step" data-act="w-" aria-label="Менше ваги"><span data-f="stepdown">&minus;2.5</span></button>
+            <span class="val"><span class="n" data-f="weight">82.5</span><span class="u">кг</span></span>
+            <button class="step" data-act="w+" aria-label="Більше ваги"><span data-f="stepup">+2.5</span></button>
+          </div>
+
+          <div class="dial reps">
+            <button class="step" data-act="r-" aria-label="Менше повторень">&minus;1</button>
+            <span class="val"><span class="n" data-f="reps">8</span><span class="u">повторень</span></span>
+            <button class="step" data-act="r+" aria-label="Більше повторень">+1</button>
+          </div>
+
+          <button class="commit" data-commit data-act="commit">Підхід зроблено</button>
+          <div class="rest" data-rest>
+            <span class="fill" data-rest-fill></span>
+            <span class="lbl">відпочинок</span>
+            <span class="tm" data-f="rest-time">2:00</span>
+            <button class="skip" data-act="skip">Пропустити</button>
+          </div>
+
+          <div class="tiles" data-tiles></div>
+          <button class="swaplink" data-act="swap">Замінити вправу</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 5. ПІДСУМОК ==================== -->
+  <section class="scr" data-screen="summary">
+    <div class="sum">
+      <span class="badge rise" style="--d:0ms">День A закрито</span>
+      <h2 class="rise" style="--d:60ms">Гарна робота.<br>Обʼєм виріс.</h2>
+      <div class="sumgrid rise" style="--d:120ms">
+        <div><div class="n" data-f="s-vol">0</div><div class="l">кг обʼєму</div></div>
+        <div><div class="n" data-f="s-time">1:04</div><div class="l">під штангою</div></div>
+        <div><div class="n" data-f="s-sets">0</div><div class="l">підходів</div></div>
+      </div>
+      <div class="grow rise" style="--d:180ms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 4 7-7"/><path d="M15 8h5v5"/></svg>
+        <span>+4.9% до обʼєму проти минулого разу</span>
+      </div>
+      <div class="recs">
+        <div class="rec rise" style="--d:240ms">
+          <span><span class="rl">новий рекорд</span><span class="rn">Жим лежачи</span></span>
+          <span class="rv">85 &times; 8</span>
+        </div>
+        <div class="rec rise" style="--d:300ms">
+          <span><span class="rl">новий рекорд</span><span class="rn">Махи в сторони</span></span>
+          <span class="rv">12 &times; 15</span>
+        </div>
+      </div>
+      <button class="done rise" style="--d:360ms" data-go="home">На головну</button>
+    </div>
+  </section>
+
+  <!-- ==================== 6. ПРОГРЕС (+ 8. ІСТОРІЯ) ==================== -->
+  <section class="scr" data-screen="progress">
+    <header class="top"><h1>Прогрес</h1></header>
+    <div class="body">
+      <div class="stats">
+        <div><div class="n" data-f="p-sessions">11</div><div class="l">тренувань</div></div>
+        <div><div class="n" data-f="p-volume">84 320</div><div class="l">кг обʼєму</div></div>
+        <div><div class="n" data-f="p-records">3</div><div class="l">рекордів</div></div>
+      </div>
+
+      <div class="segd" data-periods>
+        <button data-period="m" data-on>Місяць</button>
+        <button data-period="q">3 місяці</button>
+        <button data-period="y">Рік</button>
+      </div>
+
+      <div class="stall">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto;color:var(--warn);margin-top:2px"><path d="M12 8v5M12 17h.01"/><path d="M12 3l9 16H3z"/></svg>
+        <span>
+          <span class="st">Застій</span>
+          <span class="sb">Жим стоячи. Робоча вага 47.5 кг не росте пʼятий тиждень. Спробуй скинути 10% і зайти знову.</span>
+        </span>
+      </div>
+
+      <div class="sect">Вправи</div>
+      <div data-exstats></div>
+
+      <div class="sect">Історія</div>
+      <div data-history></div>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== 7. ВПРАВА ДЕТАЛЬНО ==================== -->
+  <section class="scr" data-screen="exdetail">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1 data-f="xd-name">Жим лежачи</h1>
+        <div class="sub" data-f="xd-meta">Груди &middot; штанга</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="kpis">
+        <div><div class="n" data-f="xd-pr">85 &times; 8</div><div class="l">рекорд</div></div>
+        <div><div class="n" data-f="xd-1rm">107.7</div><div class="l">розрахунковий 1RM, кг</div></div>
+      </div>
+      <div class="chart" data-chart-weight></div>
+      <div class="chart" data-chart-volume></div>
+      <div class="sect">Усі підходи</div>
+      <div data-setlog></div>
+    </div>
+  </section>
+
+  <!-- ==================== 9. МИНУЛЕ ТРЕНУВАННЯ ==================== -->
+  <section class="scr" data-screen="past">
+    <header class="top">
+      <button class="icobtn" data-back aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div>
+        <h1>Тренування</h1>
+        <div class="sub" data-f="pw-date">4 вересня</div>
+      </div>
+    </header>
+    <div class="body">
+      <div class="hero">
+        <div class="d" data-f="pw-day">День A</div>
+        <div class="dd" data-f="pw-sub">4 вересня, середа</div>
+        <div class="row">
+          <div><div class="n" data-f="pw-time">1:04</div><div class="l">тривалість</div></div>
+          <div><div class="n" data-f="pw-vol">6 617</div><div class="l">кг обʼєму</div></div>
+          <div><div class="n" data-f="pw-sets">20</div><div class="l">підходів</div></div>
+        </div>
+        <div class="cmp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 4 7-7"/><path d="M15 8h5v5"/></svg>
+          <span data-f="pw-cmp">+6.0% проти минулого Дня A</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i></i>ціль закрита</span>
+        <span><i data-miss></i>завалено</span>
+      </div>
+
+      <div data-pastlist></div>
+      <div class="readonly">Минулі тренування доступні тільки для читання.</div>
+    </div>
+  </section>
+
+  <!-- ==================== 10. КАТАЛОГ ВПРАВ ==================== -->
+  <section class="scr" data-screen="catalog">
+    <header class="top"><h1>Вправи</h1></header>
+    <div class="body">
+      <input class="search" type="search" placeholder="Пошук вправи" autocomplete="off" data-search>
+      <div class="filters" data-filters></div>
+      <div data-catlist></div>
+    </div>
+    <nav class="tabs" data-tabs></nav>
+  </section>
+
+  <!-- ==================== ЗАМІНА ВПРАВИ ==================== -->
+  <div class="scrim" data-act="close-sheet"></div>
+  <div class="sheet">
+    <h3>Замінити вправу</h3>
+    <p>Тренажер зайнятий? Впиши, на що міняєш. Діє тільки на це тренування і позначиться в історії.</p>
+    <input type="text" data-sheet-input placeholder="Назва вправи" autocomplete="off">
+    <div class="chiplbl">Нещодавно вписані</div>
+    <div class="chips" data-chips></div>
+    <button class="apply" data-act="apply-swap">Замінити</button>
+  </div>
+
+</div></div>
