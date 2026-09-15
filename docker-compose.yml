@@ -10,7 +10,10 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      # Postgres 18+: монтування на /var/lib/postgresql, а не .../data —
+      # образ сам кладе дані в підкаталог 18/docker. Старий шлях дає
+      # цикл перезапусків з помилкою про 'unused mount/volume'
+      - postgres-data-18:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U jym -d jym']
       interval: 5s
@@ -18,4 +21,4 @@ services:
       retries: 10
 
 volumes:
-  postgres-data:
+  postgres-data-18:

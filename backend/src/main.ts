@@ -1,9 +1,10 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
+import { PostgresExceptionFilter } from './common/filters/postgres-exception.filter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,12 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Перетворює помилки обмежень Postgres на осмислені HTTP-статуси:
+  // порушення UNIQUE — 409, зовнішнього ключа — 400. Без нього кожен сервіс
+  // мусив би ловити ті самі коди власним try/catch
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new PostgresExceptionFilter(httpAdapter));
 
   app.enableCors({
     origin: config.getOrThrow<string>('FRONTEND_URL'),

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Onest, Unbounded } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const onest = Onest({
   variable: "--font-onest",
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           сама оболонка — ніколи. На десктопі вона сидить у рамці телефона. */}
       <body className="fixed inset-0 grid place-items-center framed:bg-desk framed:p-5">
         <div className="relative flex h-full w-full flex-col overflow-clip framed:h-[844px] framed:w-[390px] framed:rounded-phone framed:shadow-phone">
-          {children}
+          <Providers>{children}</Providers>
         </div>
       </body>
     </html>

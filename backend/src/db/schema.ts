@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 // Один об'єкт-описувач читають двоє: drizzle-kit (щоб згенерувати міграцію)
 // і рантайм (щоб вивести типи запитів). Джерело правди — цей файл.
@@ -82,9 +91,92 @@ export const sessions = pgTable(
   (table) => [index('sessions_user_id_idx').on(table.userId)],
 );
 
+export const programs = pgTable(
+  'programs',
+  {
+    id: primaryId(),
+
+    // Зовнішній ключ — це звичайна колонка того самого типу, що й ключ
+    // батька (uuid), плюс .references() на неї. Окремого типу «foreignKey»
+    // немає: у SQL це обмеження на колонку, а не тип даних
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    name: text('name').notNull(),
+
+    // notNull + default обов'язкові разом. Без notNull з'явився б третій
+    // стан — NULL, тобто «невідомо, активна вона чи ні». Такого стану в
+    // предметній області немає, а перевіряти його довелося б у кожному запиті
+    isActive: boolean('is_active').notNull().default(false),
+
+    // Потрібен не для звітності, а щоб було за чим сортувати список програм
+    // на головній: активна зверху, решта — найновіші першими. Без цієї
+    // колонки порядок віддає база на власний розсуд і змінюється сам собою.
+    //
+    // У program_days і day_exercises такого поля свідомо немає: кожне
+    // збереження програми видаляє їх і вставляє заново, тож дата показувала б
+    // не «коли створено день», а «коли востаннє зберігали програму»
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('programs_user_id_idx').on(table.userId),
+
+    // ЧАСТКОВИЙ унікальний індекс: .where() звужує його дію до рядків, де
+    // is_active = true. Виходить «унікальний user_id серед активних», тобто
+    // друга активна програма того самого юзера просто не вставиться.
+    //
+    // Гарантію дає база, а не код сервісу. Різниця в тому, що код можна
+    // обійти — забути перевірку в новому методі, зайти двома запитами
+    // одночасно. Обмеження в базі обійти не можна.
+    //
+    // Ціна: активація стає транзакцією (зняти прапорець зі старої, поставити
+    // на нову), бо в проміжку між двома UPDATE активних було б дві
+    uniqueIndex('programs_one_active_per_user')
+      .on(table.userId)
+      .where(sql`${table.isActive}`),
+  ],
+);
+
+export const programDays = pgTable(
+  'program_days',
+  {
+    id: primaryId(),
+    programId: uuid('program_id')
+      .notNull()
+      .references(() => programs.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    position: integer('position').notNull(),
+  },
+  (table) => [index('program_days_program_id_idx').on(table.programId)],
+);
+
+export const dayExercises = pgTable(
+  'day_exercises',
+  {
+    id: primaryId(),
+    dayId: uuid('day_id')
+      .notNull()
+      .references(() => programDays.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    targetSets: integer('target_sets').notNull(),
+    targetReps: integer('target_reps').notNull(),
+    position: integer('position').notNull(),
+  },
+  (table) => [index('day_exercises_day_id_idx').on(table.dayId)],
+);
+
 // Типи виводяться зі схеми, руками не пишуться. Різниця не косметична:
 // в $inferInsert поля з DEFAULT (id, createdAt) опційні, в $inferSelect —
 // обов'язкові, бо база їх завжди поверне.
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
+export type Program = typeof programs.$inferSelect;
+export type NewProgram = typeof programs.$inferInsert;
+export type ProgramDay = typeof programDays.$inferSelect;
+export type NewProgramDay = typeof programDays.$inferInsert;
+export type DayExercise = typeof dayExercises.$inferSelect;
+export type NewDayExercise = typeof dayExercises.$inferInsert;
