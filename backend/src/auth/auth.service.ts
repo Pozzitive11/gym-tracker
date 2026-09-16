@@ -16,7 +16,7 @@ import { RegisterDto } from './dto/register.dto.js';
 
 // код помилки Postgres на порушення UNIQUE-обмеження
 const PG_UNIQUE_VIOLATION = '23505';
-const EMAIL_TAKEN = 'User with this email already exists';
+const EMAIL_TAKEN = 'Такий email вже зареєстрований';
 
 // Drizzle загортає помилку драйвера, тож код лежить або на самій помилці,
 // або в .cause. Перевіряємо обидва місця
@@ -72,12 +72,12 @@ export class AuthService {
       .limit(1);
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Невірний email або пароль');
     }
 
     const isPasswordCorrect = await verify(user.passwordHash, password);
     if (!isPasswordCorrect) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Невірний email або пароль');
     }
 
     return await this.buildAuthResponse(user);

@@ -28,7 +28,7 @@ export class ProgramsController {
   @Post()
   // 201 Created — конвенція для створення. Тіла немає: клієнт сам згенерував
   // id і сам надіслав дані, повідомляти йому нічого
-  @ApiResponse({ status: 201, description: 'Створено, тіла немає' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Створено, тіла немає' })
   @ApiResponse({ status: 409, description: 'Програма з таким id вже існує' })
   create(
     @CurrentUser() user: JwtPayload,
@@ -38,20 +38,20 @@ export class ProgramsController {
   }
 
   @Get()
-  @ApiResponse({ status: 200, type: [ProgramListItemDto] })
+  @ApiResponse({ status: HttpStatus.OK, type: [ProgramListItemDto] })
   findAll(@CurrentUser() user: JwtPayload) {
     return this.programsService.findAll(user);
   }
 
   @Get(':id')
-  @ApiResponse({ status: 200, type: ProgramResponseDto })
+  @ApiResponse({ status: HttpStatus.OK, type: ProgramResponseDto })
   findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.programsService.findOne(user, id);
   }
 
   @Put(':id')
-  @ApiResponse({ status: 404 })
-  @ApiResponse({ status: 200, type: ProgramResponseDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND })
+  @ApiResponse({ status: HttpStatus.OK, type: ProgramResponseDto })
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -64,8 +64,8 @@ export class ProgramsController {
   @HttpCode(HttpStatus.NO_CONTENT)
     // 204 — повна заміна пройшла, повертати нічого: клієнт надіслав повний стан
   // і вже його знає. Актуальне дерево читається через GET /programs/:id
-  @ApiResponse({ status: 204 })
-  @ApiResponse({ status: 404 })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND })
   remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.programsService.remove(user, id);
   }

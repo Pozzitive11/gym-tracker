@@ -145,6 +145,11 @@ export interface components {
         AuthResponseDto: {
             accessToken: string;
         };
+        ErrorResponseDto: {
+            statusCode: number;
+            message: string;
+            error: string;
+        };
         LoginDto: {
             /** @example vlad@example.com */
             email: string;
@@ -272,6 +277,14 @@ export interface operations {
                     "application/json": components["schemas"]["AuthResponseDto"];
                 };
             };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     AuthController_login: {
@@ -293,6 +306,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthResponseDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
         };

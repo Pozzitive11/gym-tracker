@@ -92,6 +92,18 @@
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Chrome/Safari підставляють власний (світлий) фон автозаповненим полям,
+     і звичайний background-color це не перебиває — тільки цей трюк через
+     inset box-shadow. transition на 9999s гасить миготіння нативним
+     кольором до того, як застосується наш. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 }
 
 /* Прокрутка всередині екранів є, смуга прокрутки — ні. */

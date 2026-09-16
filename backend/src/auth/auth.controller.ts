@@ -23,12 +23,14 @@ import { RefreshToken } from './decorators/refresh-token.decorator.js';
 import { ApiResponse } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto.js';
 import { UserDto } from './dto/user.dto.js';
+import { ErrorResponseDto } from './dto/error-response.dto.js';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @ApiResponse({ status: HttpStatus.CREATED, type: AuthResponseDto })
+  @ApiResponse({ status: HttpStatus.CONFLICT, type: ErrorResponseDto })
   @Post('/register')
   async register(
     @Body() dto: RegisterDto,
@@ -45,6 +47,7 @@ export class AuthController {
   }
 
   @ApiResponse({ status: HttpStatus.CREATED, type: AuthResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorResponseDto })
   @Post('/login')
   async login(
     @Body() dto: LoginDto,
