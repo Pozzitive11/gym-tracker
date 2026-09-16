@@ -20,11 +20,15 @@ import {
   REFRESH_COOKIE_OPTIONS,
 } from './auth.constants.js';
 import { RefreshToken } from './decorators/refresh-token.decorator.js';
+import { ApiResponse } from '@nestjs/swagger';
+import { AuthResponseDto } from './dto/auth-response.dto.js';
+import { UserDto } from './dto/user.dto.js';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @ApiResponse({ status: HttpStatus.CREATED, type: AuthResponseDto })
   @Post('/register')
   async register(
     @Body() dto: RegisterDto,
@@ -40,6 +44,7 @@ export class AuthController {
     return { accessToken };
   }
 
+  @ApiResponse({ status: HttpStatus.CREATED, type: AuthResponseDto })
   @Post('/login')
   async login(
     @Body() dto: LoginDto,
@@ -51,11 +56,13 @@ export class AuthController {
     return { accessToken };
   }
 
+  @ApiResponse({ status: HttpStatus.CREATED, type: AuthResponseDto })
   @Post('/refresh')
   refresh(@RefreshToken() token: string) {
     return this.authService.refresh(token);
   }
 
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
   @Post('/logout')
   // за замовчуванням Nest на @Post віддає 201 Created. Тут нічого не
   // створюється й тіла у відповіді немає — 204 описує це чесно
@@ -74,6 +81,7 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
   }
 
+  @ApiResponse({ status: HttpStatus.OK, type: UserDto })
   @Get('/me')
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: JwtPayload) {

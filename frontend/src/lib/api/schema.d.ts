@@ -142,10 +142,20 @@ export interface components {
             /** @example correct-horse-battery */
             password: string;
         };
+        AuthResponseDto: {
+            accessToken: string;
+        };
         LoginDto: {
             /** @example vlad@example.com */
             email: string;
             password: string;
+        };
+        UserDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         CreateDayExerciseDto: {
             /** Format: uuid */
@@ -258,7 +268,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthResponseDto"];
+                };
             };
         };
     };
@@ -279,7 +291,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthResponseDto"];
+                };
             };
         };
     };
@@ -296,7 +310,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthResponseDto"];
+                };
             };
         };
     };
@@ -330,7 +346,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
             };
         };
     };
