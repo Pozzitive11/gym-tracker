@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Автосканер Tailwind не заходить у каталоги з квадратними дужками
+   (динамічні маршрути Next: [index], [id]) — класи, які там єдині, тихо не
+   генеруються. Явний @source це лікує. */
+@source "./(protected)/programs/new/days";
+
 /* ============================================================
    Дизайн-токени. Джерело правди — ../../../design/src/*.html
    (напрямок IRON). Змінюючи щось тут, звіряйся з дизайном.
@@ -91,6 +96,18 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Стрілки-спінери числових полів на мобільному зайві й займають ширину:
+     кількість підходів/повторів вводять з цифрової клавіатури. */
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
 
   /* Chrome/Safari підставляють власний (світлий) фон автозаповненим полям,

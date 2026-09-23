@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DayExerciseResponseDto {
-  @ApiProperty({ format: 'uuid' }) 
+  @ApiProperty({ format: 'uuid' })
   id: string;
   @ApiProperty()
   name: string;
@@ -12,7 +12,7 @@ export class DayExerciseResponseDto {
 }
 
 export class ProgramDayResponseDto {
-  @ApiProperty({ format: 'uuid' }) 
+  @ApiProperty({ format: 'uuid' })
   id: string;
   @ApiProperty()
   name: string;
@@ -20,13 +20,23 @@ export class ProgramDayResponseDto {
   exercises: DayExerciseResponseDto[];
 }
 
-export class ProgramListItemDto {
-  @ApiProperty({ format: 'uuid' }) id: string;
-  @ApiProperty() name: string;
-  @ApiProperty() isActive: boolean;
+export class ProgramCoreDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+  @ApiProperty()
+  name: string;
+  @ApiProperty()
+  isActive: boolean;
 }
 
-export class ProgramResponseDto extends ProgramListItemDto {
+export class ProgramListItemDto extends ProgramCoreDto {
+  @ApiProperty()
+  dayCount: number;
+  @ApiProperty()
+  exerciseCount: number;
+}
+
+export class ProgramResponseDto extends ProgramCoreDto {
   @ApiProperty({ type: [ProgramDayResponseDto] })
   days: ProgramDayResponseDto[];
 }

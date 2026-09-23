@@ -30,5 +30,5 @@ export default function ProtectedLayout({ children }: LayoutProps<'/'>) {
     );
   }
 
-  return <>{children}</>;
+  return <div className="flex h-full w-full flex-col">{children}</div>;
 }

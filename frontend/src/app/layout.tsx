@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       {/* Застосунок займає рівно вікно: прокручуються екрани всередині,
           сама оболонка — ніколи. На десктопі вона сидить у рамці телефона. */}
       <body className="fixed inset-0 grid place-items-center framed:bg-desk framed:p-5">
-        <div className="relative flex h-full w-full flex-col overflow-clip framed:h-[844px] framed:w-[390px] framed:rounded-phone framed:shadow-phone">
+        <div className="relative flex h-full w-full flex-col overflow-clip bg-bg framed:h-[844px] framed:w-[390px] framed:rounded-phone framed:shadow-phone">
           <Providers>{children}</Providers>
         </div>
       </body>

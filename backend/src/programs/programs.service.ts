@@ -41,7 +41,7 @@ export class ProgramsService {
   }
 
   async findAll(user: JwtPayload) {
-    return await this.db
+    const allPrograms = await this.db
       .select({
         id: programs.id,
         name: programs.name,
@@ -50,6 +50,17 @@ export class ProgramsService {
       .from(programs)
       .where(eq(programs.userId, user.sub))
       .orderBy(desc(programs.isActive), desc(programs.createdAt));
+
+    const withDays = await this.attachDaysAndExercises(allPrograms);
+
+    // Список не показує самі вправи — лише кількості. attachDaysAndExercises
+    // усе одно тягне повне дерево одним пакетним запитом (не N+1), просто
+    // перед відправкою клієнту зрізаємо його до легкої форми
+    return withDays.map(({ days, ...program }) => ({
+      ...program,
+      dayCount: days.length,
+      exerciseCount: days.reduce((sum, day) => sum + day.exercises.length, 0),
+    }));
   }
 
   async findOne(user: JwtPayload, id: string) {
@@ -64,16 +75,39 @@ export class ProgramsService {
 
     if (!program) throw new NotFoundException();
 
-    const programDaysArray = await this.db
+    // Той самий шлях групування, що й findAll — просто з масивом на один
+    // елемент. IN (x) для однієї програми не гірший за WHERE = x, тож
+    // дублювати логіку заради "особливого випадку з однією програмою" сенсу
+    // нема
+    const [result] = await this.attachDaysAndExercises([program]);
+    return result;
+  }
+
+  // Спільне групування днів і вправ для findOne і findAll. Приймає масив
+  // програм (для findOne — масив з одним елементом), а не одну програму,
+  // саме щоб дні й вправи можна було витягти ОДНИМ запитом на всіх, а не
+  // окремим запитом на кожну — інакше знову вийшов би N+1
+  private async attachDaysAndExercises(
+    programsList: { id: string; name: string; isActive: boolean }[],
+  ) {
+    const programIds = programsList.map((program) => program.id);
+
+    // inArray з порожнім масивом (немає жодної програми) Drizzle сам
+    // перетворює на SQL false — поверне 0 рядків без синтаксичної помилки,
+    // окремо перевіряти порожній список не треба
+    const allDays = await this.db
       .select({
         id: programDays.id,
         name: programDays.name,
+        programId: programDays.programId,
       })
       .from(programDays)
-      .where(eq(programDays.programId, program.id))
+      .where(inArray(programDays.programId, programIds))
       .orderBy(asc(programDays.position));
 
-    const dayExercisesArray = await this.db
+    const dayIds = allDays.map((day) => day.id);
+
+    const allExercises = await this.db
       .select({
         id: dayExercises.id,
         name: dayExercises.name,
@@ -82,28 +116,26 @@ export class ProgramsService {
         dayId: dayExercises.dayId,
       })
       .from(dayExercises)
-      .where(
-        inArray(
-          dayExercises.dayId,
-          programDaysArray.map((day) => day.id),
-        ),
-      )
+      .where(inArray(dayExercises.dayId, dayIds))
       .orderBy(asc(dayExercises.position));
 
-    return {
+    return programsList.map((program) => ({
       ...program,
-      days: programDaysArray.map((day) => ({
-        ...day,
-        exercises: dayExercisesArray
-          .filter((exercise) => exercise.dayId === day.id)
-          .map((exercise) => ({
-            id: exercise.id,
-            name: exercise.name,
-            targetSets: exercise.targetSets,
-            targetReps: exercise.targetReps,
-          })),
-      })),
-    };
+      days: allDays
+        .filter((day) => day.programId === program.id)
+        .map((day) => ({
+          id: day.id,
+          name: day.name,
+          exercises: allExercises
+            .filter((exercise) => exercise.dayId === day.id)
+            .map((exercise) => ({
+              id: exercise.id,
+              name: exercise.name,
+              targetSets: exercise.targetSets,
+              targetReps: exercise.targetReps,
+            })),
+        })),
+    }));
   }
 
   async update(

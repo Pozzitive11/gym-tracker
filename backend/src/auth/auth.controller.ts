@@ -20,12 +20,13 @@ import {
   REFRESH_COOKIE_OPTIONS,
 } from './auth.constants.js';
 import { RefreshToken } from './decorators/refresh-token.decorator.js';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiDefaultResponse, ApiResponse } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto.js';
 import { UserDto } from './dto/user.dto.js';
-import { ErrorResponseDto } from './dto/error-response.dto.js';
+import { ErrorResponseDto } from '../common/dto/error-response.dto.js';
 
 @Controller('auth')
+@ApiDefaultResponse({ type: ErrorResponseDto })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

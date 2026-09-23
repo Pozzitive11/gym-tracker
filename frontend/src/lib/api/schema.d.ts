@@ -136,6 +136,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ErrorResponseDto: {
+            statusCode: number;
+            message: string | string[];
+            error?: string;
+        };
         RegisterDto: {
             /** @example vlad@example.com */
             email: string;
@@ -144,11 +149,6 @@ export interface components {
         };
         AuthResponseDto: {
             accessToken: string;
-        };
-        ErrorResponseDto: {
-            statusCode: number;
-            message: string;
-            error: string;
         };
         LoginDto: {
             /** @example vlad@example.com */
@@ -202,6 +202,8 @@ export interface components {
             id: string;
             name: string;
             isActive: boolean;
+            dayCount: number;
+            exerciseCount: number;
         };
         DayExerciseResponseDto: {
             /** Format: uuid */
@@ -285,6 +287,14 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     AuthController_login: {
@@ -316,6 +326,14 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     AuthController_refresh: {
@@ -335,6 +353,14 @@ export interface operations {
                     "application/json": components["schemas"]["AuthResponseDto"];
                 };
             };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     AuthController_logout: {
@@ -351,6 +377,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
             };
         };
     };
@@ -371,6 +405,14 @@ export interface operations {
                     "application/json": components["schemas"]["UserDto"];
                 };
             };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     ProgramsController_findAll: {
@@ -388,6 +430,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramListItemDto"][];
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
         };
@@ -419,6 +469,14 @@ export interface operations {
                 };
                 content?: never;
             };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     ProgramsController_findOne: {
@@ -438,6 +496,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramResponseDto"];
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
         };
@@ -471,6 +537,14 @@ export interface operations {
                 };
                 content?: never;
             };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
     };
     ProgramsController_remove: {
@@ -495,6 +569,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
             };
         };
     };

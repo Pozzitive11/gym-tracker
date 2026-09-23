@@ -17,11 +17,13 @@ import { ProgramsService } from './programs.service.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { JwtPayload } from '../auth/types/jwt-payload.js';
 import { AuthGuard } from '../auth/auth.guard.js';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiResponse, ApiDefaultResponse } from '@nestjs/swagger';
 import { ProgramListItemDto, ProgramResponseDto } from './dto/program-response.dto.js';
+import { ErrorResponseDto } from '../common/dto/error-response.dto.js';
 
 @Controller('programs')
 @UseGuards(AuthGuard)
+@ApiDefaultResponse({ type: ErrorResponseDto })
 export class ProgramsController {
   constructor(private readonly programsService: ProgramsService) {}
 
@@ -38,6 +40,7 @@ export class ProgramsController {
   }
 
   @Get()
+  
   @ApiResponse({ status: HttpStatus.OK, type: [ProgramListItemDto] })
   findAll(@CurrentUser() user: JwtPayload) {
     return this.programsService.findAll(user);

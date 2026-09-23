@@ -1,40 +1,29 @@
 "use client"
 
-import { useState } from "react";
-import { api } from "@/lib/api/client";
+import { useRegister } from "@/lib/api/auth";
+import { apiErrorText } from "@/lib/api/unwrap";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth/auth-store";
 import { RegisterForm } from "./RegisterForm";
 import { RegisterFormValues } from "./register.schema";
 
 export default function RegisterPage() {
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { setAuthenticated } = useAuthStore();
+  const register = useRegister();
+
   const onSubmit = async ({ email, password }: RegisterFormValues) => {
-    setError(null);
-    setIsSubmitting(true);
-    const { data, error } = await api.POST("/auth/register", {
-      body: { email, password },
-    });
-    setIsSubmitting(false);
-
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      await register.mutateAsync({ email, password });
+      router.push("/");
+    } catch {
+      // помилку показує register.error нижче, вдруге її не обробляємо
     }
-
-    setAuthenticated(data.accessToken);
-
-    router.push("/");
   };
 
   return (
     <RegisterForm
       onSubmit={onSubmit}
-      isSubmitting={isSubmitting}
-      submitError={error}
+      isSubmitting={register.isPending}
+      submitError={register.error ? apiErrorText(register.error) : null}
     />
   );
 }
