@@ -18,12 +18,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
   useState,
+  useTransition,
   type Dispatch,
   type SetStateAction,
 } from "react";
@@ -36,9 +37,14 @@ import {
 import { newId } from "@/lib/id";
 import { pluralizeUk } from "@/lib/pluralize";
 import { ActionBar } from "./ActionBar";
+import { ConfirmSheet } from "./ConfirmSheet";
 import { ExerciseCard } from "./ExerciseCard";
 import { ScreenHeader } from "./ScreenHeader";
-import { dayLabel, type ProgramFormValues } from "./program.schema";
+import {
+  arrayErrorMessage,
+  dayLabel,
+  type ProgramFormValues,
+} from "./program.schema";
 
 // Стартові значення нової вправи — юзер одразу бачить робочий варіант
 // і править лише те, що відрізняється
@@ -76,38 +82,64 @@ function DayEditor({ index, basePath }: { index: number; basePath: string }) {
   } = useFormContext<ProgramFormValues>();
   const exercises = useWatch({ control, name: `days.${index}.exercises` });
   const exerciseCount = exercises?.length ?? 0;
+  // Масив днів — лише заради remove: видалення дня змінює саму форму, а на
+  // бекенд піде разом з усім іншим по «Зберегти» (PUT замінює все дерево)
+  const { fields: dayFields, remove: removeDay } = useFieldArray({
+    control,
+    name: "days",
+  });
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   // Яка вправа розкрита — суто стан вигляду. Живе тут, а не в ExerciseList,
   // бо «Готово» має розкрити вправу з помилкою. Якщо після невдалого
   // збереження в цьому дні вже є помилки, одразу розкриваємо першу з них.
   const [openIndex, setOpenIndex] = useState<number | null>(() => {
     const dayErrors = errors.days?.[index]?.exercises;
-    const first = (exercises ?? []).findIndex((_, i) => Boolean(dayErrors?.[i]));
+    const first = (exercises ?? []).findIndex((_, i) =>
+      Boolean(dayErrors?.[i]),
+    );
     return first === -1 ? null : first;
   });
 
   const onDone = async () => {
-    // Порожній день не блокуємо: головний екран і так підсвічує «Додай вправи»,
-    // а кнопки видалення дня тут нема — інакше з нього не було б виходу
-    if (exerciseCount > 0) {
-      // Перевіряємо лише вправи цього дня, не всю форму. trigger записує
-      // помилки в errors (вони з'являються під полями) і повертає, чи все ок
-      const paths = Array.from(
-        { length: exerciseCount },
-        (_, i) => `days.${index}.exercises.${i}` as const,
+    // Перевіряємо лише цей день, не всю форму: і правило «хоча б одна
+    // вправа» (порожній день не пропускаємо — для непотрібного є «Видалити
+    // день»), і кожну вправу. trigger на шляху масиву перевіряє все піддерево,
+    // записує помилки в errors і повертає, чи все ок
+    const valid = await trigger(`days.${index}.exercises`);
+    if (!valid) {
+      // Згорнута вправа ховає поля з помилками — розкриваємо першу таку.
+      // getFieldState, а не errors: errors тут — знімок з моменту рендера,
+      // до trigger, і нових помилок у ньому ще нема
+      const first = Array.from({ length: exerciseCount }, (_, i) => i).find(
+        (i) => getFieldState(`days.${index}.exercises.${i}`).invalid,
       );
-      const valid = await trigger(paths);
-      if (!valid) {
-        // Згорнута вправа ховає поля з помилками — розкриваємо першу таку.
-        // getFieldState, а не errors: errors тут — знімок з моменту рендера,
-        // до trigger, і нових помилок у ньому ще нема
-        const first = paths.findIndex((path) => getFieldState(path).invalid);
-        setOpenIndex(first === -1 ? null : first);
-        return;
-      }
+      setOpenIndex(first ?? null);
+      return;
     }
     router.push(basePath);
   };
+
+  // Видалення і перехід — в одній транзиції, як «Додати день» у ProgramForm.
+  // Інакше між ними був би рендер, у якому URL досі days/N, а під індексом N
+  // уже НАСТУПНИЙ день: юзер на мить побачив би чужий день. replace, не push:
+  // URL видаленого дня не має лишатися в історії
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const deleteDay = () => {
+    startDeleteTransition(() => {
+      removeDay(index);
+      router.replace(basePath);
+    });
+  };
+
+  // Порожній день видаляємо без питань — втрачати нічого. З вправами —
+  // через підтвердження
+  const requestDelete = () => {
+    if (exerciseCount === 0) deleteDay();
+    else setIsConfirmingDelete(true);
+  };
+
+  const isLastDay = index === dayFields.length - 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -123,6 +155,16 @@ function DayEditor({ index, basePath }: { index: number; basePath: string }) {
           openIndex={openIndex}
           setOpenIndex={setOpenIndex}
         />
+
+        <button
+          type="button"
+          onClick={requestDelete}
+          disabled={isDeleting}
+          className="mt-8 flex h-14 w-full items-center justify-center gap-2.5 rounded-card text-body font-semibold text-danger inset-ring-1 inset-ring-danger/30 transition-[background-color,transform] duration-150 ease-out hover:bg-danger/10 active:scale-[.985] disabled:pointer-events-none disabled:opacity-40"
+        >
+          <Trash2 size={18} strokeWidth={2} />
+          Видалити день
+        </button>
       </div>
 
       <ActionBar>
@@ -134,6 +176,22 @@ function DayEditor({ index, basePath }: { index: number; basePath: string }) {
           Готово
         </button>
       </ActionBar>
+
+      <ConfirmSheet
+        open={isConfirmingDelete}
+        title={`Видалити ${dayLabel(index)}?`}
+        description={
+          `Разом із днем зникне ${exerciseCount} ${pluralizeUk(exerciseCount, ["вправа", "вправи", "вправ"])}.` +
+          (isLastDay
+            ? ""
+            : ` Наступні дні зсунуться: ${dayLabel(index + 1)} стане ${dayLabel(index)}.`) +
+          " Остаточно — після збереження програми."
+        }
+        confirmLabel="Видалити день"
+        onConfirm={deleteDay}
+        onCancel={() => setIsConfirmingDelete(false)}
+        pending={isDeleting}
+      />
     </div>
   );
 }
@@ -152,6 +210,7 @@ function ExerciseList({
     register,
     trigger,
     getFieldState,
+    clearErrors,
     formState: { errors },
   } = useFormContext<ProgramFormValues>();
   const { fields, append, remove, move } = useFieldArray({
@@ -172,6 +231,9 @@ function ExerciseList({
   };
 
   const addExercise = () => {
+    // Перша вправа знімає помилку «Додай хоча б одну вправу». Чистимо весь
+    // шлях лише коли вправ не було: тоді інших помилок під ним бути не може
+    if (fields.length === 0) clearErrors(`days.${index}.exercises`);
     append({
       id: newId(),
       name: "",
@@ -194,7 +256,9 @@ function ExerciseList({
   // стрілки рухають, Space опускає.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
   // Без явного id dnd-kit генерує лічильник, який на сервері й на клієнті
   // розходиться — Next ловить це як помилку гідратації.
@@ -255,7 +319,9 @@ function ExerciseList({
                   }
                   warn={Boolean(fieldErrors)}
                   isOpen={openIndex === i}
-                  onToggle={() => setOpenIndex((open) => (open === i ? null : i))}
+                  onToggle={() =>
+                    setOpenIndex((open) => (open === i ? null : i))
+                  }
                   onRemove={() => removeExercise(i)}
                   nameField={register(`${base}.name`, {
                     onChange: revalidateIfInvalid(`${base}.name`),
@@ -278,8 +344,10 @@ function ExerciseList({
         </DndContext>
       </div>
 
-      {exerciseErrors?.message && (
-        <p className="mb-2 px-1 text-meta text-warn">{exerciseErrors.message}</p>
+      {arrayErrorMessage(exerciseErrors) && (
+        <p className="mb-2 px-1 text-meta text-warn">
+          {arrayErrorMessage(exerciseErrors)}
+        </p>
       )}
 
       <button

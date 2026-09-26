@@ -101,3 +101,32 @@ export function useUpdateProgramMutation(id: string) {
     },
   });
 }
+
+export function useDeleteProgramMutation(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () =>
+      unwrap(await api.DELETE("/programs/{id}", { params: { path: { id } } })),
+    onSuccess: () => {
+      // Видалену програму прибираємо зі списку в кеші одразу: інвалідація
+      // сама лише позначила б список застарілим, і головна на мить показала б
+      // видалену програму — тап по ній вів би на «Такої програми нема»
+      queryClient.setQueryData(programsQueryOptions.queryKey, (programs) =>
+        programs?.filter((program) => program.id !== id),
+      );
+      // Деталі видаленої програми — з кешу геть: сторінка редагування в цей
+      // момент ще на екрані, але сама запит не читає (див. [id]/edit/page.tsx),
+      // тож зайвого GET і 404 не буде
+      queryClient.removeQueries({
+        queryKey: programQueryOptions(id).queryKey,
+        exact: true,
+      });
+      // Список усе одно звіряємо з сервером у фоні
+      return queryClient.invalidateQueries({
+        queryKey: programsQueryOptions.queryKey,
+        exact: true,
+      });
+    },
+  });
+}

@@ -1,8 +1,8 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   Controller,
   useFieldArray,
@@ -12,10 +12,15 @@ import {
 import { newId } from "@/lib/id";
 import { pluralizeUk } from "@/lib/pluralize";
 import { ActionBar } from "./ActionBar";
+import { ConfirmSheet } from "./ConfirmSheet";
 import { DayRow } from "./DayRow";
 import { ScreenHeader } from "./ScreenHeader";
 import { SwitchRow } from "./SwitchRow";
-import { dayLabel, type ProgramFormValues } from "./program.schema";
+import {
+  arrayErrorMessage,
+  dayLabel,
+  type ProgramFormValues,
+} from "./program.schema";
 
 const sectionLabel =
   "px-1 pt-[22px] pb-2.5 text-tag font-semibold tracking-kicker text-dim uppercase";
@@ -33,6 +38,11 @@ interface ProgramFormProps {
   // Кидає виняток при невдачі; текст для юзера приходить окремо в error
   onSave: (values: ProgramFormValues) => Promise<void>;
   error: string | null;
+  // Лише на редагуванні: без onDelete кнопки видалення нема (створення).
+  // Кидає виняток при невдачі — шторка лишається відкритою з deleteError
+  onDelete?: () => Promise<void>;
+  isDeleting?: boolean;
+  deleteError?: string | null;
 }
 
 export function ProgramForm({
@@ -43,8 +53,13 @@ export function ProgramForm({
   submitLabel,
   onSave,
   error,
+  onDelete,
+  isDeleting = false,
+  deleteError,
 }: ProgramFormProps) {
   const router = useRouter();
+  // Відкрита шторка підтвердження — стан вигляду
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const {
     register,
@@ -76,6 +91,15 @@ export function ProgramForm({
       // помилку показує error вище, вдруге її не обробляємо
     }
   });
+
+  const confirmDelete = async () => {
+    if (!onDelete) return;
+    try {
+      await onDelete();
+    } catch {
+      // помилку показує deleteError у шторці, шторка лишається відкритою
+    }
+  };
 
   return (
     <form
@@ -129,8 +153,10 @@ export function ProgramForm({
             />
           );
         })}
-        {errors.days?.message && (
-          <p className="mb-2 px-1 text-meta text-warn">{errors.days.message}</p>
+        {arrayErrorMessage(errors.days) && (
+          <p className="mb-2 px-1 text-meta text-warn">
+            {arrayErrorMessage(errors.days)}
+          </p>
         )}
         {/* Заготовка наступного дня: та сама форма й висота, що в DayRow,
             тільки пунктирна — видно, куди саме ляже новий день */}
@@ -166,6 +192,17 @@ export function ProgramForm({
             )}
           />
         </div>
+
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => setIsConfirmingDelete(true)}
+            className="mt-8 flex h-14 w-full items-center justify-center gap-2.5 rounded-card text-body font-semibold text-danger inset-ring-1 inset-ring-danger/30 transition-[background-color,transform] duration-150 ease-out hover:bg-danger/10 active:scale-[.985]"
+          >
+            <Trash2 size={18} strokeWidth={2} />
+            Видалити програму
+          </button>
+        )}
       </div>
 
       <ActionBar>
@@ -177,6 +214,19 @@ export function ProgramForm({
           {isSubmitting ? "Зберігаємо…" : submitLabel}
         </button>
       </ActionBar>
+
+      {onDelete && (
+        <ConfirmSheet
+          open={isConfirmingDelete}
+          title="Видалити програму?"
+          description="Програма зникне разом з усіма днями й вправами. Цю дію не можна скасувати."
+          confirmLabel="Видалити програму"
+          onConfirm={confirmDelete}
+          onCancel={() => setIsConfirmingDelete(false)}
+          pending={isDeleting}
+          error={deleteError}
+        />
+      )}
     </form>
   );
 }

@@ -79,3 +79,13 @@ export function toUpdateProgramBody(values: ProgramFormValues) {
 export function toCreateProgramBody(values: ProgramFormValues) {
   return { id: values.id, ...toUpdateProgramBody(values) };
 }
+
+// Помилка рівня масиву (min(1) у днях чи вправах) від zodResolver лежить у
+// різних місцях: у errors.x.root.message, якщо в масиві вже реєструвались
+// поля (x.0.name тощо), інакше в errors.x.message. Після видалення всіх
+// елементів це саме перший випадок — тож читаємо обидва місця
+export function arrayErrorMessage(
+  error: { message?: string; root?: { message?: string } } | undefined,
+) {
+  return error?.root?.message ?? error?.message;
+}
