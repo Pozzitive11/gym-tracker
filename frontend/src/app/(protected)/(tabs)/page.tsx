@@ -4,10 +4,10 @@ import Link from "next/link";
 import { EmptyHome } from "./EmptyHome";
 import { HomeHeader } from "./HomeHeader";
 import { ProgramListItem } from "./ProgramListItem";
-import { usePrograms } from "@/lib/api/programs";
+import { useProgramsQuery } from "@/lib/api/programs";
 
 export default function HomePage() {
-  const { data: programs, isPending, isError, refetch } = usePrograms();
+  const { data: programs, isPending, isError, refetch } = useProgramsQuery();
 
   if (isPending) {
     return (
@@ -52,6 +52,7 @@ export default function HomePage() {
           {programs.map((program) => (
             <ProgramListItem
               key={program.id}
+              href={`/programs/${program.id}/edit`}
               name={program.name}
               dayCount={program.dayCount}
               exerciseCount={program.exerciseCount}

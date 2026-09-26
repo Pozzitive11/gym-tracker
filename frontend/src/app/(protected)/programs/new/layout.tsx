@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { newId } from "@/lib/id";
-import { programSchema, type ProgramFormValues } from "./program.schema";
+import { programSchema, type ProgramFormValues } from "../_form/program.schema";
 
 // Layout не перемонтовується при переході між /programs/new і
 // /programs/new/days/N — тож форма-чернетка живе, поки юзер у цьому
