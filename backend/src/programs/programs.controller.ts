@@ -18,8 +18,12 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { JwtPayload } from '../auth/types/jwt-payload.js';
 import { AuthGuard } from '../auth/auth.guard.js';
 import { ApiResponse, ApiDefaultResponse } from '@nestjs/swagger';
-import { ProgramListItemDto, ProgramResponseDto } from './dto/program-response.dto.js';
+import {
+  ProgramListItemDto,
+  ProgramResponseDto,
+} from './dto/program-response.dto.js';
 import { ErrorResponseDto } from '../common/dto/error-response.dto.js';
+import { IdParamDto } from '../common/dto/id-param.dto.js';
 
 @Controller('programs')
 @UseGuards(AuthGuard)
@@ -30,7 +34,15 @@ export class ProgramsController {
   @Post()
   // 201 Created — конвенція для створення. Тіла немає: клієнт сам згенерував
   // id і сам надіслав дані, повідомляти йому нічого
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Створено, тіла немає' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Створено, тіла немає',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    type: ErrorResponseDto,
+    description: 'Тіло не пройшло валідацію',
+  })
   @ApiResponse({ status: 409, description: 'Програма з таким id вже існує' })
   create(
     @CurrentUser() user: JwtPayload,
@@ -40,24 +52,33 @@ export class ProgramsController {
   }
 
   @Get()
-  
   @ApiResponse({ status: HttpStatus.OK, type: [ProgramListItemDto] })
   findAll(@CurrentUser() user: JwtPayload) {
     return this.programsService.findAll(user);
   }
 
   @Get(':id')
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    type: ErrorResponseDto,
+    description: 'id не є UUID',
+  })
   @ApiResponse({ status: HttpStatus.OK, type: ProgramResponseDto })
-  findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+  findOne(@CurrentUser() user: JwtPayload, @Param() { id }: IdParamDto) {
     return this.programsService.findOne(user, id);
   }
 
   @Put(':id')
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    type: ErrorResponseDto,
+    description: 'id не є UUID або тіло не пройшло валідацію',
+  })
   @ApiResponse({ status: HttpStatus.NOT_FOUND })
   @ApiResponse({ status: HttpStatus.OK, type: ProgramResponseDto })
   update(
     @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
+    @Param() { id }: IdParamDto,
     @Body() updateProgramDto: UpdateProgramDto,
   ) {
     return this.programsService.update(user, id, updateProgramDto);
@@ -65,11 +86,16 @@ export class ProgramsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-    // 204 — повна заміна пройшла, повертати нічого: клієнт надіслав повний стан
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    type: ErrorResponseDto,
+    description: 'id не є UUID',
+  })
+  // 204 — повна заміна пройшла, повертати нічого: клієнт надіслав повний стан
   // і вже його знає. Актуальне дерево читається через GET /programs/:id
   @ApiResponse({ status: HttpStatus.NO_CONTENT })
   @ApiResponse({ status: HttpStatus.NOT_FOUND })
-  remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+  remove(@CurrentUser() user: JwtPayload, @Param() { id }: IdParamDto) {
     return this.programsService.remove(user, id);
   }
 }

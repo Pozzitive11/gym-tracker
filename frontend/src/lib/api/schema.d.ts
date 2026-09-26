@@ -462,6 +462,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Тіло не пройшло валідацію */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
             /** @description Програма з таким id вже існує */
             409: {
                 headers: {
@@ -498,6 +507,15 @@ export interface operations {
                     "application/json": components["schemas"]["ProgramResponseDto"];
                 };
             };
+            /** @description id не є UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
             default: {
                 headers: {
                     [name: string]: unknown;
@@ -529,6 +547,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramResponseDto"];
+                };
+            };
+            /** @description id не є UUID або тіло не пройшло валідацію */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
             404: {
@@ -563,6 +590,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description id не є UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
             };
             404: {
                 headers: {
