@@ -145,7 +145,8 @@ export function ExerciseCard({
         <div
           id={panelId}
           onClick={(e) => {
-            if ((e.target as HTMLElement).closest("input, label, button")) return;
+            if ((e.target as HTMLElement).closest("input, label, button"))
+              return;
             onToggle();
           }}
           className="px-4 pt-1 pb-4"
@@ -160,7 +161,9 @@ export function ExerciseCard({
               {...nameField}
             />
             {nameError && (
-              <span className="mt-2 block text-meta text-warn">{nameError}</span>
+              <span className="mt-2 block text-meta text-warn">
+                {nameError}
+              </span>
             )}
           </label>
 

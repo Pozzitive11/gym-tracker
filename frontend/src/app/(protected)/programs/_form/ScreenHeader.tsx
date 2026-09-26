@@ -22,7 +22,9 @@ export function ScreenHeader({ title, subtitle, backHref }: ScreenHeaderProps) {
           {title}
         </h1>
         {subtitle && (
-          <p className="truncate text-label text-dim tabular-nums">{subtitle}</p>
+          <p className="truncate text-label text-dim tabular-nums">
+            {subtitle}
+          </p>
         )}
       </div>
     </header>
