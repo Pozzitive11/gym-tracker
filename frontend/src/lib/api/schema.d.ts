@@ -132,6 +132,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/exercises": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ExercisesController_findAll"];
+        put?: never;
+        post: operations["ExercisesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkoutsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workouts/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkoutsController_findActive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workouts/{id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkoutsController_finish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workouts/{id}/sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkoutsController_addSet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -165,8 +245,11 @@ export interface components {
         CreateDayExerciseDto: {
             /** Format: uuid */
             id: string;
-            /** @example Присідання зі штангою */
-            name: string;
+            /**
+             * Format: uuid
+             * @description Вправа з каталогу (GET /exercises): системна або своя
+             */
+            exerciseId: string;
             /**
              * @description Цільові підходи
              * @example 5
@@ -208,6 +291,8 @@ export interface components {
         DayExerciseResponseDto: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            exerciseId: string;
             name: string;
             targetSets: number;
             targetReps: number;
@@ -231,6 +316,83 @@ export interface components {
             days: components["schemas"]["CreateProgramDayDto"][];
             /** @description Чи стає програма активною одразу */
             isActive: boolean;
+        };
+        ExerciseResponseDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Жим лежачи */
+            name: string;
+            /** @description Вписана юзером, а не з системного каталогу */
+            isMine: boolean;
+        };
+        CreateExerciseDto: {
+            /**
+             * Format: uuid
+             * @description UUIDv7, генерує клієнт. Використовується, лише якщо вправи з такою назвою ще нема
+             */
+            id: string;
+            /** @example Жим у Сміті */
+            name: string;
+        };
+        StartWorkoutDto: {
+            /**
+             * Format: uuid
+             * @description UUIDv7, генерує клієнт — повтор запиту не створить друге тренування
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description День програми, який тренуємо
+             */
+            programDayId: string;
+        };
+        WorkoutSetResponseDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            exerciseId: string;
+            /** Format: uuid */
+            plannedExerciseId: string | null;
+            weight: number;
+            reps: number;
+            /** Format: date-time */
+            performedAt: string;
+        };
+        ActiveWorkoutResponseDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            programDayId: string | null;
+            dayName: string;
+            /** Format: date-time */
+            startedAt: string;
+            sets: components["schemas"]["WorkoutSetResponseDto"][];
+        };
+        CreateWorkoutSetDto: {
+            /**
+             * Format: uuid
+             * @description UUIDv7, генерує клієнт ОДИН раз у момент «підхід зроблено». Повтори запиту — з тим самим id
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Вправа, яку реально зробили
+             */
+            exerciseId: string;
+            /**
+             * Format: uuid
+             * @description Вправа за планом, якщо її замінили. Нема — заміни не було
+             */
+            plannedExerciseId?: string;
+            /** @example 82.5 */
+            weight: number;
+            /** @example 8 */
+            reps: number;
+            /**
+             * Format: date-time
+             * @description Коли підхід зроблено, час клієнта
+             */
+            performedAt: string;
         };
     };
     responses: never;
@@ -592,6 +754,244 @@ export interface operations {
                 content?: never;
             };
             /** @description id не є UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ExercisesController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseResponseDto"][];
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ExercisesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateExerciseDto"];
+            };
+        };
+        responses: {
+            /** @description Створена вправа або вже наявна з такою самою назвою */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseResponseDto"];
+                };
+            };
+            /** @description Тіло не пройшло валідацію */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartWorkoutDto"];
+            };
+        };
+        responses: {
+            /** @description Тренування почалось, тіла немає */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Тіло не пройшло валідацію або дня не знайдено */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Тренування з таким id вже існує */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_findActive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveWorkoutResponseDto"];
+                };
+            };
+            /** @description Активного тренування нема */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_finish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description id не є UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Нема такого незавершеного тренування */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_addSet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkoutSetDto"];
+            };
+        };
+        responses: {
+            /** @description Підхід записано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description id не є UUID або тіло не пройшло валідацію */
             400: {
                 headers: {
                     [name: string]: unknown;

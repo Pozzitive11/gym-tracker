@@ -1,17 +1,39 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProgramDto } from './dto/create-program.dto.js';
 import { UpdateProgramDto } from './dto/update-program.dto.js';
 import { DRIZZLE } from '../db/db.module.js';
 import { type Db } from '../db/db.module.js';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
-import { programs, programDays, dayExercises } from '../db/schema.js';
+import { and, asc, desc, eq, inArray, ne, notInArray, sql } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
+import {
+  programs,
+  programDays,
+  dayExercises,
+  exercises,
+} from '../db/schema.js';
 import type { JwtPayload } from '../auth/types/jwt-payload.js';
+import { ExercisesService } from '../exercises/exercises.service.js';
+
+// У ON CONFLICT DO UPDATE значення рядка, який НЕ вдалося вставити, лежать
+// у псевдотаблиці excluded. Drizzle окремого хелпера для неї не має
+const excluded = (column: PgColumn) => sql.raw(`excluded."${column.name}"`);
 
 @Injectable()
 export class ProgramsService {
-  constructor(@Inject(DRIZZLE) private readonly db: Db) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Db,
+    private readonly exercisesService: ExercisesService,
+  ) {}
 
   async create(user: JwtPayload, createProgramDto: CreateProgramDto) {
+    await this.assertExercisesVisible(user, createProgramDto.days);
+
     await this.db.transaction(async (tx) => {
       const program = {
         id: createProgramDto.id,
@@ -107,15 +129,18 @@ export class ProgramsService {
 
     const dayIds = allDays.map((day) => day.id);
 
+    // Назва живе в каталозі, у day_exercises — лише посилання на неї
     const allExercises = await this.db
       .select({
         id: dayExercises.id,
-        name: dayExercises.name,
+        exerciseId: dayExercises.exerciseId,
+        name: exercises.name,
         targetSets: dayExercises.targetSets,
         targetReps: dayExercises.targetReps,
         dayId: dayExercises.dayId,
       })
       .from(dayExercises)
+      .innerJoin(exercises, eq(exercises.id, dayExercises.exerciseId))
       .where(inArray(dayExercises.dayId, dayIds))
       .orderBy(asc(dayExercises.position));
 
@@ -130,6 +155,7 @@ export class ProgramsService {
             .filter((exercise) => exercise.dayId === day.id)
             .map((exercise) => ({
               id: exercise.id,
+              exerciseId: exercise.exerciseId,
               name: exercise.name,
               targetSets: exercise.targetSets,
               targetReps: exercise.targetReps,
@@ -143,6 +169,8 @@ export class ProgramsService {
     id: string,
     updateProgramDto: UpdateProgramDto,
   ) {
+    await this.assertExercisesVisible(user, updateProgramDto.days);
+
     await this.db.transaction(async (tx) => {
       const program = {
         name: updateProgramDto.name,
@@ -165,16 +193,65 @@ export class ProgramsService {
 
       if (!updatedProgram) throw new NotFoundException();
 
-      // вправи видаляти окремо не треба — вони підуть каскадом за днями
-      await tx.delete(programDays).where(eq(programDays.programId, id));
-
       const { dayRows, exerciseRows } = this.buildChildRows(
         id,
         updateProgramDto.days,
       );
+      const dayIds = dayRows.map((day) => day.id);
+      const exerciseIds = exerciseRows.map((exercise) => exercise.id);
 
-      await tx.insert(programDays).values(dayRows);
-      await tx.insert(dayExercises).values(exerciseRows);
+      // Дифф, а не «видалити все й вставити заново». Рядки днів і вправ
+      // лишаються тими самими, поки юзер їх не прибрав: на program_days
+      // посилаються тренування (ON DELETE SET NULL), і повна заміна
+      // обнуляла б це посилання на кожне збереження програми.
+      //
+      // Upsert по id небезпечний без перевірки: клієнт може прислати id дня
+      // чужої програми, і ON CONFLICT DO UPDATE перезаписав би чужий рядок.
+      // Тож спершу переконуємось, що кожен уже наявний id — наш
+      await this.assertOwnedChildren(tx, id, dayIds, exerciseIds);
+
+      // Прибрані дні (їхні вправи підуть каскадом) і прибрані вправи
+      // днів, що лишились
+      await tx
+        .delete(programDays)
+        .where(
+          and(
+            eq(programDays.programId, id),
+            notInArray(programDays.id, dayIds),
+          ),
+        );
+      await tx
+        .delete(dayExercises)
+        .where(
+          and(
+            inArray(dayExercises.dayId, dayIds),
+            notInArray(dayExercises.id, exerciseIds),
+          ),
+        );
+
+      await tx
+        .insert(programDays)
+        .values(dayRows)
+        .onConflictDoUpdate({
+          target: programDays.id,
+          set: {
+            name: excluded(programDays.name),
+            position: excluded(programDays.position),
+          },
+        });
+      await tx
+        .insert(dayExercises)
+        .values(exerciseRows)
+        .onConflictDoUpdate({
+          target: dayExercises.id,
+          set: {
+            dayId: excluded(dayExercises.dayId),
+            exerciseId: excluded(dayExercises.exerciseId),
+            targetSets: excluded(dayExercises.targetSets),
+            targetReps: excluded(dayExercises.targetReps),
+            position: excluded(dayExercises.position),
+          },
+        });
     });
     return this.findOne(user, id);
   }
@@ -197,7 +274,7 @@ export class ProgramsService {
       day.exercises.map((exercise, exerciseIndex) => ({
         id: exercise.id,
         dayId: day.id,
-        name: exercise.name,
+        exerciseId: exercise.exerciseId,
         targetSets: exercise.targetSets,
         targetReps: exercise.targetReps,
         position: exerciseIndex,
@@ -205,6 +282,61 @@ export class ProgramsService {
     );
 
     return { dayRows, exerciseRows };
+  }
+
+  // FK на exercises перевіряє лише, що вправа існує. Чужа «моя» вправа
+  // теж існує — без цієї перевірки її можна було б вписати у свою програму
+  private async assertExercisesVisible(
+    user: JwtPayload,
+    days: CreateProgramDto['days'],
+  ) {
+    const ids = [
+      ...new Set(days.flatMap((day) => day.exercises.map((e) => e.exerciseId))),
+    ];
+    const visible = await this.exercisesService.countVisible(user, ids);
+    if (visible !== ids.length) {
+      throw new BadRequestException('Вправу не знайдено в каталозі');
+    }
+  }
+
+  // Чи не підсунув клієнт id дня або вправи дня з ЧУЖОЇ програми. Upsert
+  // по id (ON CONFLICT DO UPDATE) цього не розрізняє: якщо прийде id дня
+  // Петра, він просто оновив би день Петра нашими даними. Тож до upsert
+  // шукаємо серед надісланих id такі, що вже є в базі, але під іншою
+  // програмою. Знайшовся хоч один — 409, нічого не зберігаємо.
+  // Нові id (яких ще нема в базі) сюди не потрапляють — їх upsert вставить.
+  private async assertOwnedChildren(
+    tx: Parameters<Parameters<Db['transaction']>[0]>[0],
+    programId: string,
+    dayIds: string[],
+    exerciseIds: string[],
+  ) {
+    const [foreignDay] = await tx
+      .select({ id: programDays.id })
+      .from(programDays)
+      .where(
+        and(
+          inArray(programDays.id, dayIds),
+          ne(programDays.programId, programId),
+        ),
+      )
+      .limit(1);
+
+    const [foreignExercise] = await tx
+      .select({ id: dayExercises.id })
+      .from(dayExercises)
+      .innerJoin(programDays, eq(programDays.id, dayExercises.dayId))
+      .where(
+        and(
+          inArray(dayExercises.id, exerciseIds),
+          ne(programDays.programId, programId),
+        ),
+      )
+      .limit(1);
+
+    if (foreignDay || foreignExercise) {
+      throw new ConflictException('Запис із таким id належить іншій програмі');
+    }
   }
 
   async remove(user: JwtPayload, id: string) {

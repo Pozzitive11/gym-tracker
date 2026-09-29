@@ -39,6 +39,7 @@ import { pluralizeUk } from "@/lib/pluralize";
 import { ActionBar } from "./ActionBar";
 import { ConfirmSheet } from "./ConfirmSheet";
 import { ExerciseCard } from "./ExerciseCard";
+import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { ScreenHeader } from "./ScreenHeader";
 import {
   arrayErrorMessage,
@@ -211,6 +212,7 @@ function ExerciseList({
     trigger,
     getFieldState,
     clearErrors,
+    setValue,
     formState: { errors },
   } = useFormContext<ProgramFormValues>();
   const { fields, append, remove, move } = useFieldArray({
@@ -230,17 +232,35 @@ function ExerciseList({
     if (getFieldState(path).invalid) void trigger(path);
   };
 
-  const addExercise = () => {
-    // Перша вправа знімає помилку «Додай хоча б одну вправу». Чистимо весь
-    // шлях лише коли вправ не було: тоді інших помилок під ним бути не може
-    if (fields.length === 0) clearErrors(`days.${index}.exercises`);
-    append({
-      id: newId(),
-      name: "",
-      targetSets: DEFAULT_TARGET_SETS,
-      targetReps: DEFAULT_TARGET_REPS,
-    });
-    setOpenIndex(fields.length);
+  // Для чого відкрито каталог: null — нова вправа, число — заміна вправи
+  // з цим індексом. undefined — шторка закрита
+  const [pickerTarget, setPickerTarget] = useState<number | null | undefined>(
+    undefined,
+  );
+
+  // «Додати вправу» спершу відкриває каталог: рядок з'являється вже з
+  // обраною вправою, порожніх «Нова вправа» у списку не буває
+  const addExercise = () => setPickerTarget(null);
+
+  const onPickExercise = ({ id, name }: { id: string; name: string }) => {
+    if (pickerTarget === null) {
+      // Перша вправа знімає помилку «Додай хоча б одну вправу». Чистимо весь
+      // шлях лише коли вправ не було: тоді інших помилок під ним бути не може
+      if (fields.length === 0) clearErrors(`days.${index}.exercises`);
+      append({
+        id: newId(),
+        exerciseId: id,
+        name,
+        targetSets: DEFAULT_TARGET_SETS,
+        targetReps: DEFAULT_TARGET_REPS,
+      });
+    } else if (pickerTarget !== undefined) {
+      const base = `days.${index}.exercises.${pickerTarget}` as const;
+      setValue(`${base}.name`, name, { shouldDirty: true });
+      setValue(`${base}.exerciseId`, id, { shouldDirty: true });
+      revalidateIfInvalid(`${base}.exerciseId`)();
+    }
+    setPickerTarget(undefined);
   };
 
   const removeExercise = (i: number) => {
@@ -323,9 +343,7 @@ function ExerciseList({
                     setOpenIndex((open) => (open === i ? null : i))
                   }
                   onRemove={() => removeExercise(i)}
-                  nameField={register(`${base}.name`, {
-                    onChange: revalidateIfInvalid(`${base}.name`),
-                  })}
+                  onPickExercise={() => setPickerTarget(i)}
                   setsField={register(`${base}.targetSets`, {
                     valueAsNumber: true,
                     onChange: revalidateIfInvalid(`${base}.targetSets`),
@@ -334,7 +352,7 @@ function ExerciseList({
                     valueAsNumber: true,
                     onChange: revalidateIfInvalid(`${base}.targetReps`),
                   })}
-                  nameError={fieldErrors?.name?.message}
+                  exerciseError={fieldErrors?.exerciseId?.message}
                   setsError={fieldErrors?.targetSets?.message}
                   repsError={fieldErrors?.targetReps?.message}
                 />
@@ -364,6 +382,17 @@ function ExerciseList({
           Додати вправу
         </span>
       </button>
+
+      <ExercisePickerSheet
+        open={pickerTarget !== undefined}
+        selectedId={
+          pickerTarget != null
+            ? exercises?.[pickerTarget]?.exerciseId
+            : undefined
+        }
+        onPick={onPickExercise}
+        onClose={() => setPickerTarget(undefined)}
+      />
     </>
   );
 }

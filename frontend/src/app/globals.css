@@ -72,9 +72,32 @@
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
   /* --- тіні --- */
-  --shadow-phone: 0 0 0 10px #202024, 0 0 0 11px #37373d,
-    0 40px 90px rgb(0 0 0 / 0.6);
+  --shadow-phone:
+    0 0 0 10px #202024, 0 0 0 11px #37373d, 0 40px 90px rgb(0 0 0 / 0.6);
   --shadow-drag: 0 14px 30px rgb(0 0 0 / 0.55);
+
+  /* --- анімації --- */
+  --animate-tile-in: tile-in 260ms var(--ease-out) both; /* плитка підходу */
+  --animate-fade-in: fade-in 200ms ease both; /* заміна для reduced motion */
+
+  @keyframes tile-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 /* Шрифти підключає next/font у layout.tsx; тут лише зв'язуємо

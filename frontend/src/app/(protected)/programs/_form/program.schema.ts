@@ -5,7 +5,10 @@ import type { components } from "@/lib/api/schema";
 // правди, а тут — швидка відповідь юзеру без походу в мережу.
 const exerciseSchema = z.object({
   id: z.uuid(),
-  name: z.string().trim().min(1, "Введи назву вправи"),
+  // Порожній рядок — вправу ще не обрали; uuid() відсіює і його
+  exerciseId: z.uuid({ error: "Обери вправу" }),
+  // Назва з каталогу — лише для показу в рядку, на бекенд не йде
+  name: z.string(),
   // valueAsNumber віддає NaN для порожнього поля — окреме повідомлення на це
   targetSets: z
     .number({ error: "Введи число" })
@@ -50,12 +53,15 @@ export function toFormValues(program: ProgramResponse): ProgramFormValues {
     isActive: program.isActive,
     days: program.days.map((day) => ({
       id: day.id,
-      exercises: day.exercises.map(({ id, name, targetSets, targetReps }) => ({
-        id,
-        name,
-        targetSets,
-        targetReps,
-      })),
+      exercises: day.exercises.map(
+        ({ id, exerciseId, name, targetSets, targetReps }) => ({
+          id,
+          exerciseId,
+          name,
+          targetSets,
+          targetReps,
+        }),
+      ),
     })),
   };
 }
@@ -69,7 +75,15 @@ export function toUpdateProgramBody(values: ProgramFormValues) {
     days: values.days.map((day, index) => ({
       id: day.id,
       name: dayLabel(index),
-      exercises: day.exercises,
+      // name — лише для показу; у тілі тільки посилання на каталог
+      exercises: day.exercises.map(
+        ({ id, exerciseId, targetSets, targetReps }) => ({
+          id,
+          exerciseId,
+          targetSets,
+          targetReps,
+        }),
+      ),
     })),
   };
 }

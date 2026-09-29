@@ -1,8 +1,10 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   index,
   integer,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -91,6 +93,45 @@ export const sessions = pgTable(
   (table) => [index('sessions_user_id_idx').on(table.userId)],
 );
 
+// Каталог вправ. Статистика будується по exercises.id, а не по назві: так
+// «Жим лежачи» в двох різних програмах — одна лінія на графіку.
+//
+// userId розділяє каталог на два шари в одній таблиці:
+//   NULL      — системна вправа, спільна для всіх (сід у міграції);
+//   заповнений — «моя»: вписана вручну, бачить лише автор.
+// Окрема таблиця під «мої» дала б два джерела, на які мусили б посилатися
+// і програми, і підходи — зовнішній ключ не вміє вказувати «на одну з двох».
+export const exercises = pgTable(
+  'exercises',
+  {
+    id: primaryId(),
+    userId: uuid('user_id').references(() => users.id, {
+      onDelete: 'cascade',
+    }),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('exercises_user_id_idx').on(table.userId),
+
+    // Дубль назви в межах одного шару заборонений, і без огляду на регістр:
+    // «Жим лежачи» і «жим лежачи» — та сама вправа. Індекс по виразу
+    // lower(name), а не по самій колонці — саме тому.
+    //
+    // Два часткові індекси, а не один на (user_id, lower(name)): у
+    // звичайному UNIQUE два NULL вважаються різними, і системні вправи з
+    // однаковою назвою пройшли б обидві
+    uniqueIndex('exercises_system_name_unique')
+      .on(sql`lower(${table.name})`)
+      .where(sql`${table.userId} is null`),
+    uniqueIndex('exercises_user_name_unique')
+      .on(table.userId, sql`lower(${table.name})`)
+      .where(sql`${table.userId} is not null`),
+  ],
+);
+
 export const programs = pgTable(
   'programs',
   {
@@ -160,12 +201,113 @@ export const dayExercises = pgTable(
     dayId: uuid('day_id')
       .notNull()
       .references(() => programDays.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
+    // Посилання на каталог замість вільного тексту назви: тоді «Жим лежачи»
+    // з різних програм і з підходів — одна й та сама вправа для статистики.
+    // Без onDelete (NO ACTION): вправу, що стоїть у програмі, не видалити
+    exerciseId: uuid('exercise_id')
+      .notNull()
+      .references(() => exercises.id),
     targetSets: integer('target_sets').notNull(),
     targetReps: integer('target_reps').notNull(),
     position: integer('position').notNull(),
   },
-  (table) => [index('day_exercises_day_id_idx').on(table.dayId)],
+  (table) => [
+    index('day_exercises_day_id_idx').on(table.dayId),
+    index('day_exercises_exercise_id_idx').on(table.exerciseId),
+  ],
+);
+
+// Одне тренування — один похід у зал.
+export const workouts = pgTable(
+  'workouts',
+  {
+    id: primaryId(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Звідки взялось тренування. set null, а не cascade: видалили день чи
+    // всю програму — історія тренувань лишається, просто без посилання
+    programDayId: uuid('program_day_id').references(() => programDays.id, {
+      onDelete: 'set null',
+    }),
+
+    // Знімок назви дня на момент тренування. Потрібен саме через set null
+    // вище: коли посилання обнулиться, історія все одно покаже «День A»
+    dayName: text('day_name').notNull(),
+
+    startedAt: timestamp('started_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // NULL — тренування ще триває (або його кинули, не завершивши)
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('workouts_user_id_idx').on(table.userId),
+    // під ON DELETE SET NULL: база шукає тренування видаленого дня
+    index('workouts_program_day_id_idx').on(table.programDayId),
+  ],
+);
+
+// Один підхід — один рядок. Уся статистика (графіки ваги, обʼєм, рекорди)
+// — це запити по цій таблиці, окремих таблиць зі статистикою немає.
+//
+// Посилання на вправи без onDelete, тобто NO ACTION: вправу, по якій уже є
+// підходи, видалити не можна — інакше разом з нею зникла б історія. Саме
+// NO ACTION, а не RESTRICT: різниця в моменті перевірки. RESTRICT
+// перевіряє одразу, NO ACTION — в кінці оператора. При видаленні юзера
+// каскад прибирає і його власні вправи, і його підходи в одному операторі;
+// з RESTRICT перевірка вправи спрацювала б раніше, ніж каскад дійде до
+// підходів, і видалення акаунта впало б.
+export const workoutSets = pgTable(
+  'workout_sets',
+  {
+    // Генерує клієнт у момент натискання «зроблено». Повтор запиту приходить
+    // з тим самим id — так сервер відрізняє повтор від нового підходу
+    id: primaryId(),
+    workoutId: uuid('workout_id')
+      .notNull()
+      .references(() => workouts.id, { onDelete: 'cascade' }),
+
+    // Вправа, яку реально зробили
+    exerciseId: uuid('exercise_id')
+      .notNull()
+      .references(() => exercises.id),
+    // Вправа за планом, якщо її замінили посеред тренування. NULL — заміни
+    // не було. Звідси в історії підпис «замість: …»
+    plannedExerciseId: uuid('planned_exercise_id').references(
+      () => exercises.id,
+    ),
+
+    // numeric, а не real: real — двійкове число з плаваючою комою, в ньому
+    // 0.1 + 0.2 ≠ 0.3, і рекорд «85 > 84.99999» почав би брехати. numeric
+    // зберігає десяткові цифри точно. (6, 2) — до 9999.99 кг, два знаки
+    // після коми вистачить і на 0.25 кг.
+    //
+    // mode: 'number' — драйвер pg віддає numeric рядком (бо JS-число не
+    // вміщає довільну точність). Для ваги до 9999.99 точність number
+    // достатня, тож хай Drizzle конвертує сам
+    weight: numeric('weight', {
+      precision: 6,
+      scale: 2,
+      mode: 'number',
+    }).notNull(),
+    reps: integer('reps').notNull(),
+
+    // Коли підхід зроблено — клієнтський час, не час вставки. Зараз вони
+    // майже збігаються, але з офлайн-чергою підхід може доїхати на сервер
+    // через годину, а на графіку має стояти тоді, коли його зробили
+    performedAt: timestamp('performed_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('workout_sets_workout_id_idx').on(table.workoutId),
+    index('workout_sets_exercise_id_idx').on(table.exerciseId),
+    index('workout_sets_planned_exercise_id_idx').on(table.plannedExerciseId),
+    // Останній рубіж від сміття: DTO це теж перевіряє, але обійти DTO
+    // можна (новий ендпоінт, ручний SQL), а CHECK у базі — ні
+    check('workout_sets_weight_non_negative', sql`${table.weight} >= 0`),
+    check('workout_sets_reps_non_negative', sql`${table.reps} >= 0`),
+  ],
 );
 
 // Типи виводяться зі схеми, руками не пишуться. Різниця не косметична:
@@ -180,3 +322,7 @@ export type ProgramDay = typeof programDays.$inferSelect;
 export type NewProgramDay = typeof programDays.$inferInsert;
 export type DayExercise = typeof dayExercises.$inferSelect;
 export type NewDayExercise = typeof dayExercises.$inferInsert;
+export type Exercise = typeof exercises.$inferSelect;
+export type Workout = typeof workouts.$inferSelect;
+export type WorkoutSet = typeof workoutSets.$inferSelect;
+export type NewWorkoutSet = typeof workoutSets.$inferInsert;

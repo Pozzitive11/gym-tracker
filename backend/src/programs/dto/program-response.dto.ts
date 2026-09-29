@@ -3,6 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 export class DayExerciseResponseDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
+  @ApiProperty({ format: 'uuid' })
+  exerciseId: string;
+  // Назва з каталогу — лише для показу, назад у тілі PUT не надсилається
   @ApiProperty()
   name: string;
   @ApiProperty()

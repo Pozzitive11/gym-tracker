@@ -5,7 +5,9 @@ import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { validateEnv } from './config/env.validation.js';
 import { DbModule } from './db/db.module.js';
+import { ExercisesModule } from './exercises/exercises.module.js';
 import { ProgramsModule } from './programs/programs.module.js';
+import { WorkoutsModule } from './workouts/workouts.module.js';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { ProgramsModule } from './programs/programs.module.js';
     DbModule,
     AuthModule,
     ProgramsModule,
+    ExercisesModule,
+    WorkoutsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

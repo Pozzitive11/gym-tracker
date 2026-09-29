@@ -1,12 +1,14 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X } from "lucide-react";
+import { ChevronRight, GripVertical, X } from "lucide-react";
 import { useId } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
 // Пропозиція контракту (нове відносно попередньої версії): id — ідентифікатор
 // для сортування (field.id з useFieldArray), stepField/stepError — необов'язкове
 // третє поле «Крок, кг»: поки його нема, третя колонка просто не малюється.
+// Назва більше не вводиться текстом: onPickExercise відкриває каталог, а
+// exerciseError — помилка поля exerciseId.
 interface ExerciseCardProps {
   id: string;
   title: string;
@@ -15,11 +17,11 @@ interface ExerciseCardProps {
   isOpen: boolean;
   onToggle: () => void;
   onRemove: () => void;
-  nameField: UseFormRegisterReturn;
+  onPickExercise: () => void;
   setsField: UseFormRegisterReturn;
   repsField: UseFormRegisterReturn;
   stepField?: UseFormRegisterReturn;
-  nameError?: string;
+  exerciseError?: string;
   setsError?: string;
   repsError?: string;
   stepError?: string;
@@ -41,11 +43,11 @@ export function ExerciseCard({
   isOpen,
   onToggle,
   onRemove,
-  nameField,
+  onPickExercise,
   setsField,
   repsField,
   stepField,
-  nameError,
+  exerciseError,
   setsError,
   repsError,
   stepError,
@@ -151,21 +153,28 @@ export function ExerciseCard({
           }}
           className="px-4 pt-1 pb-4"
         >
-          <label className="block">
-            <span className={labelClass}>Назва</span>
-            <input
-              type="text"
-              autoComplete="off"
-              placeholder="Наприклад: Жим лежачи"
-              className={`${fieldBase} h-14 px-4 text-body placeholder:text-dim-2`}
-              {...nameField}
+          <span className={labelClass}>Вправа</span>
+          <button
+            type="button"
+            onClick={onPickExercise}
+            className={`${fieldBase} flex h-14 items-center gap-2 px-4 text-left text-body transition-transform duration-150 ease-out active:scale-[.985]`}
+          >
+            <span
+              className={`min-w-0 flex-1 truncate ${trimmedTitle ? "" : "text-dim-2"}`}
+            >
+              {trimmedTitle || "Обрати з каталогу"}
+            </span>
+            <ChevronRight
+              size={18}
+              strokeWidth={2}
+              className="flex-none text-dim-2"
             />
-            {nameError && (
-              <span className="mt-2 block text-meta text-warn">
-                {nameError}
-              </span>
-            )}
-          </label>
+          </button>
+          {exerciseError && (
+            <span className="mt-2 block text-meta text-warn">
+              {exerciseError}
+            </span>
+          )}
 
           <div className="mt-3 flex gap-2">
             <NumberField label="Підходи" error={setsError} field={setsField} />
