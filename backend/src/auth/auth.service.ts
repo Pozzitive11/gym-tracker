@@ -10,7 +10,13 @@ import { hash, verify } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
 import { REFRESH_TTL_MS } from './auth.constants.js';
 import { DRIZZLE, type Db } from '../db/db.module.js';
-import { sessions, users, type User } from '../db/schema.js';
+import {
+  programs,
+  sessions,
+  users,
+  workouts,
+  type User,
+} from '../db/schema.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 
@@ -130,6 +136,23 @@ export class AuthService {
     if (!payload) return;
 
     await this.db.delete(sessions).where(eq(sessions.id, payload.sessionId));
+  }
+
+  // Видалення акаунта з усім, що юзеру належить. Порядок не довільний:
+  // каскад від users сам по собі тут падає. Кожен крок каскаду Postgres
+  // виконує окремою внутрішньою операцією і перевіряє NO ACTION-ключі в кінці
+  // КОЖНОЇ з них. Каскад видаляє власні вправи юзера раніше, ніж доходить до
+  // його підходів, а підходи на ці вправи посилаються — і база відмовляє.
+  // Тож спершу прибираємо те, що посилається на вправи (тренування з
+  // підходами, програми з днями), а вже потім юзера — решта піде каскадом:
+  // сесії й власні вправи. Транзакція — щоб не лишити півакаунта, якщо
+  // якийсь крок впаде
+  async deleteAccount(userId: string) {
+    await this.db.transaction(async (tx) => {
+      await tx.delete(workouts).where(eq(workouts.userId, userId));
+      await tx.delete(programs).where(eq(programs.userId, userId));
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   private async verifyRefreshToken(token: string | undefined) {

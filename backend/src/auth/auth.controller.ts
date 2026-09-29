@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -90,5 +91,18 @@ export class AuthController {
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: JwtPayload) {
     return this.authService.findUserById(user.sub);
+  }
+
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @Delete('/me')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteMe(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.deleteAccount(user.sub);
+    // сесії в базі вже видалені каскадом, лишилось прибрати саму куку
+    res.clearCookie(REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
   }
 }

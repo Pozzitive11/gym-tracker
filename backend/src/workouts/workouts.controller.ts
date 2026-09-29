@@ -77,8 +77,6 @@ export class WorkoutsController {
     return this.workoutsService.finish(user, id);
   }
 
-  // TODO(Влад): крок 7. Статуси нижче — чернетка, уточни після рішення
-  // про повтор (201 чи 409)
   @Post(':id/sets')
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Підхід записано' })
   @ApiResponse({
