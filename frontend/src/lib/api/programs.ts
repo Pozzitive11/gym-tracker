@@ -53,6 +53,14 @@ function evictProgramDetailsFromCache(
   });
 }
 
+// Наступний день і план активного тренування сервер рахує з програм, тож
+// після будь-якого запису програм ці запити теж застаріли — а самі вони про
+// це не дізнаються: staleTime 60 с, і хвилину кеш вважається свіжим.
+// Префікс ["workouts"] зачіпає і ["workouts", "next"], і ["workouts", "active"]
+function invalidateWorkoutQueries(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: ["workouts"] });
+}
+
 export function useCreateProgramMutation() {
   const queryClient = useQueryClient();
 
@@ -69,10 +77,13 @@ export function useCreateProgramMutation() {
     onSuccess: () => {
       evictProgramDetailsFromCache(queryClient);
       // Без інвалідації головна показала б старий список до кінця staleTime
-      return queryClient.invalidateQueries({
-        queryKey: programsQueryOptions.queryKey,
-        exact: true,
-      });
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: programsQueryOptions.queryKey,
+          exact: true,
+        }),
+        invalidateWorkoutQueries(queryClient),
+      ]);
     },
   });
 }
@@ -94,10 +105,13 @@ export function useUpdateProgramMutation(id: string) {
       evictProgramDetailsFromCache(queryClient, id);
       // Список лише позначаємо застарілим: змінились назва, к-сть днів і
       // вправ. exact — щоб не зачепити щойно покладену програму зайвим рефетчем
-      return queryClient.invalidateQueries({
-        queryKey: programsQueryOptions.queryKey,
-        exact: true,
-      });
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: programsQueryOptions.queryKey,
+          exact: true,
+        }),
+        invalidateWorkoutQueries(queryClient),
+      ]);
     },
   });
 }
@@ -123,10 +137,13 @@ export function useDeleteProgramMutation(id: string) {
         exact: true,
       });
       // Список усе одно звіряємо з сервером у фоні
-      return queryClient.invalidateQueries({
-        queryKey: programsQueryOptions.queryKey,
-        exact: true,
-      });
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: programsQueryOptions.queryKey,
+          exact: true,
+        }),
+        invalidateWorkoutQueries(queryClient),
+      ]);
     },
   });
 }

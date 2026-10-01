@@ -16,11 +16,15 @@ interface SetTilesProps {
 }
 
 const tileBase =
-  "grid h-[52px] min-w-0 flex-1 place-items-center rounded-control text-label font-semibold tabular-nums";
+  "grid h-[52px] min-w-0 grow basis-[calc(25%-6px)] place-items-center rounded-control text-label font-semibold tabular-nums";
 
 export function SetTiles({ tiles, onRetry }: SetTilesProps) {
   return (
-    <div className="mt-4 flex gap-2">
+    // Плитки тягнуться на всю ширину, але не більше 4 в рядку: basis — рівно
+    // чверть рядка мінус частка проміжків (3 проміжки по 8px на 4 плитки =
+    // 6px на плитку), тож п'ята не влазить і переноситься. grow розтягує
+    // неповний рядок: 3 плитки — по третині, 5 — рядок з 4 і одна на всю
+    <div className="mt-4 flex flex-wrap gap-2">
       {tiles.map((tile, index) => {
         if (tile === null) {
           return (

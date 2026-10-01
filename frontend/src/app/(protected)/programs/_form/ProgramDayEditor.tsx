@@ -254,11 +254,16 @@ function ExerciseList({
         targetSets: DEFAULT_TARGET_SETS,
         targetReps: DEFAULT_TARGET_REPS,
       });
+      // Нова вправа одразу розкрита: наступне, що юзер робить, — підганяє
+      // підходи й повтори. fields.length — ще довжина ДО append, тобто
+      // якраз індекс щойно доданого рядка
+      setOpenIndex(fields.length);
     } else if (pickerTarget !== undefined) {
       const base = `days.${index}.exercises.${pickerTarget}` as const;
       setValue(`${base}.name`, name, { shouldDirty: true });
       setValue(`${base}.exerciseId`, id, { shouldDirty: true });
       revalidateIfInvalid(`${base}.exerciseId`)();
+      setOpenIndex(pickerTarget);
     }
     setPickerTarget(undefined);
   };

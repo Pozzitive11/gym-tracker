@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface SwappedExercise {
+export interface SwappedExercise {
   exerciseId: string;
   name: string;
 }

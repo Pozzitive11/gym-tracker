@@ -1,10 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { EmptyHome } from "./EmptyHome";
 import { HomeHeader } from "./HomeHeader";
+import { NextWorkoutCard } from "./NextWorkoutCard";
 import { ProgramListItem } from "./ProgramListItem";
 import { useProgramsQuery } from "@/lib/api/programs";
+import { apiErrorText } from "@/lib/api/unwrap";
+import {
+  useActiveWorkoutQuery,
+  useNextWorkoutQuery,
+  useStartWorkoutMutation,
+} from "@/lib/api/workouts";
+import { newId } from "@/lib/id";
 
 export default function HomePage() {
   const { data: programs, isPending, isError, refetch } = useProgramsQuery();
@@ -45,28 +54,72 @@ export default function HomePage() {
       {programs.length === 0 ? (
         <EmptyHome />
       ) : (
-        <section className="px-5 pb-6">
-          <h2 className="px-1 pt-[22px] pb-2.5 text-tag font-semibold tracking-kicker text-dim uppercase">
-            Програми
-          </h2>
-          {programs.map((program) => (
-            <ProgramListItem
-              key={program.id}
-              href={`/programs/${program.id}/edit`}
-              name={program.name}
-              dayCount={program.dayCount}
-              exerciseCount={program.exerciseCount}
-              isActive={program.isActive}
-            />
-          ))}
-          <Link
-            href="/programs/new"
-            className="block w-full p-4 text-center text-label font-medium text-dim transition-colors hover:text-text active:text-text"
-          >
-            + Нова програма
-          </Link>
-        </section>
+        <>
+          <WorkoutCard />
+          <section className="px-5 pb-6">
+            <h2 className="px-1 pt-[22px] pb-2.5 text-tag font-semibold tracking-kicker text-dim uppercase">
+              Програми
+            </h2>
+            {programs.map((program) => (
+              <ProgramListItem
+                key={program.id}
+                href={`/programs/${program.id}/edit`}
+                name={program.name}
+                dayCount={program.dayCount}
+                exerciseCount={program.exerciseCount}
+                isActive={program.isActive}
+              />
+            ))}
+            <Link
+              href="/programs/new"
+              className="block w-full p-4 text-center text-label font-medium text-dim transition-colors hover:text-text active:text-text"
+            >
+              + Нова програма
+            </Link>
+          </section>
+        </>
       )}
     </div>
+  );
+}
+
+// Картка над списком програм. Незавершене тренування важливіше за наступне:
+// інакше «Назад» з екрана тренування і повторний тап «Почати» створили б
+// друге тренування, кинувши перше
+function WorkoutCard() {
+  const router = useRouter();
+  const { data: active } = useActiveWorkoutQuery();
+  const { data: next } = useNextWorkoutQuery();
+  const startWorkout = useStartWorkoutMutation();
+
+  if (active) {
+    return (
+      <NextWorkoutCard
+        kicker="Незавершене тренування"
+        actionLabel="Продовжити тренування"
+        dayName={active.dayName}
+        exercises={active.exercises.map((exercise) => exercise.name)}
+        onStart={() => router.push("/workout")}
+      />
+    );
+  }
+
+  if (!next) return null;
+
+  return (
+    <NextWorkoutCard
+      dayName={next.dayName}
+      exercises={next.exerciseNames}
+      pending={startWorkout.isPending}
+      error={startWorkout.isError ? apiErrorText(startWorkout.error) : null}
+      onStart={() =>
+        startWorkout.mutate(
+          // Новий id на кожен тап. Подвійний тап не створить двох тренувань:
+          // поки запит летить, кнопка неактивна (pending)
+          { id: newId(), programDayId: next.programDayId },
+          { onSuccess: () => router.push("/workout") },
+        )
+      }
+    />
   );
 }

@@ -13,7 +13,7 @@ interface ExercisePanelProps {
   tiles: SetTile[];
   children: ReactNode; // два StepperDial: вага й повтори
   action: ReactNode; // кнопка «Підхід зроблено» або RestTimer
-  onSwap: () => void;
+  onSwap?: () => void; // нема — посилання «Замінити вправу» не показується
   onRetrySet?: (index: number) => void; // нове: повтор незбереженого підходу
 }
 
@@ -48,25 +48,42 @@ export function ExercisePanel({
 
       <SetTiles tiles={tiles} onRetry={onRetrySet} />
 
-      <button
-        onClick={onSwap}
-        className="mt-3.5 w-full p-2.5 text-label font-medium text-dim transition-colors hover:text-text active:text-text"
-      >
-        Замінити вправу
-      </button>
+      {onSwap && (
+        <button
+          onClick={onSwap}
+          className="mt-3.5 w-full p-2.5 text-label font-medium text-dim transition-colors hover:text-text active:text-text"
+        >
+          Замінити вправу
+        </button>
+      )}
     </section>
   );
 }
 
 // Головна кнопка екрана. Окремо від панелі, бо на її місці іноді стоїть
 // таймер відпочинку — і вирішує це стан, а не панель.
-export function CommitSetButton({ onClick }: { onClick: () => void }) {
+export function CommitSetButton({
+  onClick,
+  disabled = false,
+  secondary = false,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  // Пропозиція контракту (нове): усі вправи закриті, головна дія тепер
+  // «Завершити тренування» — кнопка підходу стає другорядною
+  secondary?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
-      className="mt-5 h-[72px] w-full rounded-[20px] bg-accent font-display text-lead font-extrabold text-accent-ink transition-transform duration-150 ease-out active:scale-[.975]"
+      disabled={disabled}
+      className={`mt-5 w-full rounded-[20px] font-display font-extrabold transition-[transform,opacity] duration-150 ease-out active:scale-[.975] disabled:pointer-events-none disabled:opacity-40 ${
+        secondary
+          ? "h-14 bg-surface-2 text-label text-text"
+          : "h-[72px] bg-accent text-lead text-accent-ink"
+      }`}
     >
-      Підхід зроблено
+      {secondary ? "Ще один підхід" : "Підхід зроблено"}
     </button>
   );
 }

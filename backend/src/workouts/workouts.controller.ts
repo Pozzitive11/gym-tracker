@@ -18,7 +18,10 @@ import { ErrorResponseDto } from '../common/dto/error-response.dto.js';
 import { IdParamDto } from '../common/dto/id-param.dto.js';
 import { CreateWorkoutSetDto } from './dto/create-workout-set.dto.js';
 import { StartWorkoutDto } from './dto/start-workout.dto.js';
-import { ActiveWorkoutResponseDto } from './dto/workout-response.dto.js';
+import {
+  ActiveWorkoutResponseDto,
+  NextWorkoutResponseDto,
+} from './dto/workout-response.dto.js';
 import { WorkoutsService } from './workouts.service.js';
 
 @Controller('workouts')
@@ -59,6 +62,21 @@ export class WorkoutsController {
     const workout = await this.workoutsService.findActive(user);
     if (!workout) res.status(HttpStatus.NO_CONTENT);
     return workout ?? undefined;
+  }
+
+  @Get('next')
+  @ApiResponse({ status: HttpStatus.OK, type: NextWorkoutResponseDto })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Активної програми нема',
+  })
+  async findNext(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const next = await this.workoutsService.findNext(user);
+    if (!next) res.status(HttpStatus.NO_CONTENT);
+    return next ?? undefined;
   }
 
   @Post(':id/finish')

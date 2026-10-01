@@ -64,9 +64,10 @@ export function StepperDial({
             autoComplete="off"
             aria-label={inputAriaLabel}
             value={value}
+            placeholder="0"
             onChange={(event) => onValueChange(event.target.value)}
             onFocus={(event) => event.target.select()}
-            className={`${numberClass} w-full rounded-control bg-transparent text-center text-text caret-accent outline-none focus:bg-surface-2`}
+            className={`${numberClass} w-full rounded-control bg-transparent text-center text-text caret-accent outline-none placeholder:text-dim-2 focus:bg-surface-2`}
           />
         ) : (
           <span className={`block ${numberClass}`}>{value}</span>

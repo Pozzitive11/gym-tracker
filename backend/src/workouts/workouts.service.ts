@@ -4,10 +4,26 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+} from 'drizzle-orm';
 import type { JwtPayload } from '../auth/types/jwt-payload.js';
 import { DRIZZLE, type Db } from '../db/db.module.js';
-import { programDays, programs, workouts, workoutSets } from '../db/schema.js';
+import {
+  dayExercises,
+  exercises,
+  programDays,
+  programs,
+  workouts,
+  workoutSets,
+} from '../db/schema.js';
 import type { CreateWorkoutSetDto } from './dto/create-workout-set.dto.js';
 import type { StartWorkoutDto } from './dto/start-workout.dto.js';
 import { ExercisesService } from '../exercises/exercises.service.js';
@@ -73,7 +89,120 @@ export class WorkoutsService {
       .where(eq(workoutSets.workoutId, workout.id))
       .orderBy(asc(workoutSets.performedAt));
 
-    return { ...workout, sets };
+    const plan = workout.programDayId
+      ? await this.findDayPlan(workout.programDayId)
+      : [];
+    const last = await this.findLastSets(
+      user,
+      workout.id,
+      plan.map((exercise) => exercise.exerciseId),
+    );
+
+    return {
+      ...workout,
+      exercises: plan.map((exercise) => ({
+        ...exercise,
+        lastWeight: last.get(exercise.exerciseId)?.weight ?? null,
+        lastReps: last.get(exercise.exerciseId)?.reps ?? null,
+      })),
+      sets,
+    };
+  }
+
+  // Наступний день активної програми: той, що йде після дня останнього
+  // завершеного тренування за цією програмою, по колу (A → B → C → A).
+  // Тренувань ще не було або останній день уже видалили — перший день.
+  // null — активної програми нема
+  async findNext(user: JwtPayload) {
+    const days = await this.db
+      .select({ id: programDays.id, name: programDays.name })
+      .from(programDays)
+      .innerJoin(programs, eq(programs.id, programDays.programId))
+      .where(and(eq(programs.userId, user.sub), eq(programs.isActive, true)))
+      .orderBy(asc(programDays.position));
+
+    if (days.length === 0) return null;
+
+    const [last] = await this.db
+      .select({ programDayId: workouts.programDayId })
+      .from(workouts)
+      .where(
+        and(
+          eq(workouts.userId, user.sub),
+          isNotNull(workouts.finishedAt),
+          inArray(
+            workouts.programDayId,
+            days.map((day) => day.id),
+          ),
+        ),
+      )
+      .orderBy(desc(workouts.finishedAt))
+      .limit(1);
+
+    const lastIndex = days.findIndex((day) => day.id === last?.programDayId);
+    // -1 (тренувань не було) + 1 = 0: перший день, окремої гілки не треба
+    const next = days[(lastIndex + 1) % days.length];
+
+    const plan = await this.findDayPlan(next.id);
+    return {
+      programDayId: next.id,
+      dayName: next.name,
+      exerciseNames: plan.map((exercise) => exercise.name),
+    };
+  }
+
+  // Останній підхід кожної з вправ у МИНУЛИХ тренуваннях юзера — звідси
+  // початкова вага на екрані тренування.
+  //
+  // Задача «останній рядок у кожній групі» (greatest-n-per-group). У
+  // Postgres для неї є DISTINCT ON: сортуємо за вправою, а всередині —
+  // від найсвіжішого, і DISTINCT ON (exercise_id) лишає з кожної групи
+  // перший рядок, тобто найсвіжіший. Альтернатива — віконна функція
+  // ROW_NUMBER() OVER (PARTITION BY exercise_id ORDER BY performed_at DESC)
+  // і фільтр = 1: переносимо між базами, але довше
+  private async findLastSets(
+    user: JwtPayload,
+    currentWorkoutId: string,
+    exerciseIds: string[],
+  ) {
+    if (exerciseIds.length === 0) {
+      return new Map<string, { weight: number; reps: number }>();
+    }
+
+    const rows = await this.db
+      .selectDistinctOn([workoutSets.exerciseId], {
+        exerciseId: workoutSets.exerciseId,
+        weight: workoutSets.weight,
+        reps: workoutSets.reps,
+      })
+      .from(workoutSets)
+      .innerJoin(workouts, eq(workouts.id, workoutSets.workoutId))
+      .where(
+        and(
+          eq(workouts.userId, user.sub),
+          ne(workouts.id, currentWorkoutId),
+          inArray(workoutSets.exerciseId, exerciseIds),
+        ),
+      )
+      .orderBy(workoutSets.exerciseId, desc(workoutSets.performedAt));
+
+    return new Map(rows.map((row) => [row.exerciseId, row]));
+  }
+
+  // Вправи дня з назвами з каталогу, по порядку
+  private findDayPlan(programDayId: string) {
+    return this.db
+      .select({
+        id: dayExercises.id,
+        exerciseId: dayExercises.exerciseId,
+        name: exercises.name,
+        targetSets: dayExercises.targetSets,
+        targetReps: dayExercises.targetReps,
+      })
+      .from(dayExercises)
+      .innerJoin(exercises, eq(exercises.id, dayExercises.exerciseId))
+      .where(eq(dayExercises.dayId, programDayId))
+      .orderBy(asc(dayExercises.position));
   }
 
   async finish(user: JwtPayload, id: string) {

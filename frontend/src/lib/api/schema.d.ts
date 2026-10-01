@@ -94,7 +94,7 @@ export interface paths {
         get: operations["AuthController_me"];
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["AuthController_deleteMe"];
         options?: never;
         head?: never;
         patch?: never;
@@ -172,6 +172,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["WorkoutsController_findActive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workouts/next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkoutsController_findNext"];
         put?: never;
         post?: never;
         delete?: never;
@@ -346,6 +362,21 @@ export interface components {
              */
             programDayId: string;
         };
+        PlannedExerciseDto: {
+            /**
+             * Format: uuid
+             * @description id рядка day_exercises
+             */
+            id: string;
+            /** Format: uuid */
+            exerciseId: string;
+            name: string;
+            targetSets: number;
+            targetReps: number;
+            /** @description Вага останнього підходу цієї вправи в минулих тренуваннях */
+            lastWeight: number | null;
+            lastReps: number | null;
+        };
         WorkoutSetResponseDto: {
             /** Format: uuid */
             id: string;
@@ -366,7 +397,16 @@ export interface components {
             dayName: string;
             /** Format: date-time */
             startedAt: string;
+            /** @description План дня по порядку. Порожній, якщо день програми вже видалили */
+            exercises: components["schemas"]["PlannedExerciseDto"][];
             sets: components["schemas"]["WorkoutSetResponseDto"][];
+        };
+        NextWorkoutResponseDto: {
+            /** Format: uuid */
+            programDayId: string;
+            dayName: string;
+            /** @description Назви вправ дня по порядку */
+            exerciseNames: string[];
         };
         CreateWorkoutSetDto: {
             /**
@@ -566,6 +606,31 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UserDto"];
                 };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_deleteMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             default: {
                 headers: {
@@ -910,6 +975,40 @@ export interface operations {
                 };
             };
             /** @description Активного тренування нема */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_findNext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextWorkoutResponseDto"];
+                };
+            };
+            /** @description Активної програми нема */
             204: {
                 headers: {
                     [name: string]: unknown;
