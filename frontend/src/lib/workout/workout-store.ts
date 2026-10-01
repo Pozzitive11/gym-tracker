@@ -22,6 +22,8 @@ interface WorkoutState {
   bindWorkout: (workoutId: string) => void;
   selectExercise: (index: number) => void;
   swapExercise: (index: number, exercise: SwappedExercise) => void;
+  // Повернути вправу за планом: ключ просто зникає
+  unswapExercise: (index: number) => void;
   startRest: (seconds: number) => void;
   skipRest: () => void;
   reset: () => void;
@@ -57,6 +59,15 @@ export const useWorkoutStore = create<WorkoutState>()(
         set((state) => ({
           swappedExercises: { ...state.swappedExercises, [index]: exercise },
         })),
+
+      unswapExercise: (index) =>
+        set((state) => {
+          // Копія, а не delete на самому стані: Zustand порівнює посилання,
+          // і зміна старого об'єкта на місці не перемалювала б екран
+          const swappedExercises = { ...state.swappedExercises };
+          delete swappedExercises[index];
+          return { swappedExercises };
+        }),
 
       startRest: (seconds) =>
         set({

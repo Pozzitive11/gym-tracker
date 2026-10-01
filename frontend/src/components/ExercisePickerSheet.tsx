@@ -11,10 +11,14 @@ import {
 import { newId } from "@/lib/id";
 
 // Пропозиція контракту: шторка вибору вправи з каталогу. Відкрита чи ні —
-// вирішує батько (він знає, куди піде обрана вправа: новий рядок чи заміна
-// наявного). Каталог і створення своєї вправи шторка бере сама.
+// вирішує батько (він знає, куди піде обрана вправа: новий рядок, заміна в
+// програмі чи заміна посеред тренування). Каталог і створення своєї вправи
+// шторка бере сама. Спільна для форми програми й екрана тренування.
+// title / description (нове) — заголовок і підпис під ним
 interface ExercisePickerSheetProps {
   open: boolean;
+  title?: string;
+  description?: string;
   selectedId?: string;
   onPick: (exercise: Pick<Exercise, "id" | "name">) => void;
   onClose: () => void;
@@ -22,6 +26,8 @@ interface ExercisePickerSheetProps {
 
 export function ExercisePickerSheet({
   open,
+  title = "Вправа",
+  description,
   selectedId,
   onPick,
   onClose,
@@ -107,8 +113,13 @@ export function ExercisePickerSheet({
             id="exercise-picker-title"
             className="font-display text-[18px] font-bold tracking-title"
           >
-            Вправа
+            {title}
           </h3>
+          {description && (
+            <p className="mt-1.5 text-label leading-relaxed text-dim">
+              {description}
+            </p>
+          )}
           <label className="relative mt-4 block">
             <Search
               size={18}

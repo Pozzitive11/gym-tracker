@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ExercisePickerSheet } from "@/components/ExercisePickerSheet";
 import { apiErrorText } from "@/lib/api/unwrap";
 import {
   useActiveWorkoutQuery,
@@ -93,6 +94,10 @@ function ActiveWorkoutScreen({ workout }: { workout: ActiveWorkout }) {
   const startRest = useWorkoutStore((state) => state.startRest);
   const skipRest = useWorkoutStore((state) => state.skipRest);
   const reset = useWorkoutStore((state) => state.reset);
+  const swapExercise = useWorkoutStore((state) => state.swapExercise);
+  const unswapExercise = useWorkoutStore((state) => state.unswapExercise);
+  // Відкрита шторка заміни — стан лише для вигляду
+  const [isSwapOpen, setIsSwapOpen] = useState(false);
 
   const secondsLeft = useRestSecondsLeft();
   const elapsed = useElapsed(workout.startedAt);
@@ -109,6 +114,16 @@ function ActiveWorkoutScreen({ workout }: { workout: ActiveWorkout }) {
   const current = Math.min(isBound ? currentIndex : 0, slots.length - 1);
   const isResting = isBound && secondsLeft !== null && secondsLeft > 0;
   const allDone = slots.length > 0 && slots.every((slot) => slot.isDone);
+  const currentSlot = slots[current];
+
+  // Заміна діє лише на це тренування і живе в сторі, поки не зроблено
+  // перший підхід (далі сервер знає про неї з plannedExerciseId). Обрали
+  // вправу з плану — заміну скасовано
+  const onSwapPick = ({ id, name }: { id: string; name: string }) => {
+    if (id === currentSlot.planned.exerciseId) unswapExercise(current);
+    else swapExercise(current, { exerciseId: id, name });
+    setIsSwapOpen(false);
+  };
 
   const onFinish = () =>
     finish.mutate(workout.id, {
@@ -195,12 +210,14 @@ function ActiveWorkoutScreen({ workout }: { workout: ActiveWorkout }) {
       <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6">
         {slots.map((slot) =>
           slot.index === current ? (
-            // key: інша вправа — інша панель, і поля ваги й повторів
-            // беруть нове початкове значення, а не лишаються від попередньої
+            // key: інша вправа (або заміна) — інша панель, і поля ваги й
+            // повторів беруть нове початкове значення, а не лишаються від
+            // попередньої
             <CurrentExercise
-              key={slot.index}
+              key={`${slot.index}-${slot.actual.exerciseId}`}
               slot={slot}
               allDone={allDone}
+              onSwap={() => setIsSwapOpen(true)}
               rest={
                 isResting ? (
                   <RestTimer
@@ -238,6 +255,15 @@ function ActiveWorkoutScreen({ workout }: { workout: ActiveWorkout }) {
           </button>
         </div>
       )}
+
+      <ExercisePickerSheet
+        open={isSwapOpen}
+        title="Замінити вправу"
+        description={`Замість «${currentSlot.planned.name}», лише на це тренування. В історії буде видно, що саме замінили.`}
+        selectedId={currentSlot.actual.exerciseId}
+        onPick={onSwapPick}
+        onClose={() => setIsSwapOpen(false)}
+      />
     </div>
   );
 }
@@ -248,12 +274,14 @@ function ActiveWorkoutScreen({ workout }: { workout: ActiveWorkout }) {
 function CurrentExercise({
   slot,
   allDone,
+  onSwap,
   rest,
   onCommit,
   onRetry,
 }: {
   slot: WorkoutSlot;
   allDone: boolean;
+  onSwap: () => void;
   rest: React.ReactNode;
   onCommit: (weight: number, reps: number) => void;
   onRetry: (tileIndex: number) => void;
@@ -297,6 +325,7 @@ function CurrentExercise({
       ])}`}
       tiles={tiles}
       onRetrySet={onRetry}
+      onSwap={onSwap}
       action={
         rest ?? (
           <CommitSetButton

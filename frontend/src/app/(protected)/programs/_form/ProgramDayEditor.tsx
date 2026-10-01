@@ -34,12 +34,12 @@ import {
   useWatch,
   type FieldPath,
 } from "react-hook-form";
+import { ExercisePickerSheet } from "@/components/ExercisePickerSheet";
 import { newId } from "@/lib/id";
 import { pluralizeUk } from "@/lib/pluralize";
 import { ActionBar } from "./ActionBar";
 import { ConfirmSheet } from "./ConfirmSheet";
 import { ExerciseCard } from "./ExerciseCard";
-import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { ScreenHeader } from "./ScreenHeader";
 import {
   arrayErrorMessage,
