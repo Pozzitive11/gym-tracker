@@ -104,7 +104,8 @@ function WorkoutCard() {
     );
   }
 
-  if (!next) return null;
+  if (next === undefined) return null; // ще вантажиться
+  if (next === null) return <NoActiveProgram />;
 
   return (
     <NextWorkoutCard
@@ -121,5 +122,21 @@ function WorkoutCard() {
         )
       }
     />
+  );
+}
+
+// Програми є, а активної нема — без цього головна просто мовчки не мала б
+// кнопки старту. Список програм одразу під карткою, тож посилання не треба
+function NoActiveProgram() {
+  return (
+    <div className="mx-5 mt-1 rounded-panel bg-surface px-5 py-5">
+      <p className="text-tag font-semibold tracking-kicker text-warn uppercase">
+        Нема активної програми
+      </p>
+      <p className="mt-2.5 text-body leading-relaxed text-dim">
+        Відкрий одну з програм нижче й увімкни «Зробити активною» — тут
+        зʼявиться наступне тренування.
+      </p>
+    </div>
   );
 }
