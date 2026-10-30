@@ -10,10 +10,12 @@ import { useProgramsQuery } from "@/lib/api/programs";
 import { apiErrorText } from "@/lib/api/unwrap";
 import {
   useActiveWorkoutQuery,
+  useFinishWorkoutMutation,
   useNextWorkoutQuery,
   useStartWorkoutMutation,
 } from "@/lib/api/workouts";
 import { newId } from "@/lib/id";
+import { useWorkoutStore } from "@/lib/workout/workout-store";
 
 export default function HomePage() {
   const { data: programs, isPending, isError, refetch } = useProgramsQuery();
@@ -91,6 +93,8 @@ function WorkoutCard() {
   const { data: active } = useActiveWorkoutQuery();
   const { data: next } = useNextWorkoutQuery();
   const startWorkout = useStartWorkoutMutation();
+  const finishWorkout = useFinishWorkoutMutation();
+  const resetWorkoutStore = useWorkoutStore((state) => state.reset);
 
   if (active) {
     return (
@@ -100,6 +104,14 @@ function WorkoutCard() {
         dayName={active.dayName}
         exercises={active.exercises.map((exercise) => exercise.name)}
         onStart={() => router.push("/workout")}
+        // Кинуте тренування закривається одним тапом, без заходу на екран.
+        // Без підходів сервер його видалить, а не збереже пустим
+        secondaryLabel="Завершити"
+        secondaryPending={finishWorkout.isPending}
+        onSecondary={() =>
+          finishWorkout.mutate(active.id, { onSuccess: resetWorkoutStore })
+        }
+        error={finishWorkout.isError ? apiErrorText(finishWorkout.error) : null}
       />
     );
   }

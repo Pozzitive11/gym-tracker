@@ -9,6 +9,11 @@ interface NextWorkoutCardProps {
   actionLabel?: string;
   pending?: boolean;
   error?: string | null;
+  // Пропозиція контракту (нове): друга, тиха дія під головною кнопкою —
+  // для незавершеного тренування це «Завершити»
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+  secondaryPending?: boolean;
 }
 
 export function NextWorkoutCard({
@@ -19,6 +24,9 @@ export function NextWorkoutCard({
   actionLabel = "Почати тренування",
   pending = false,
   error,
+  secondaryLabel,
+  onSecondary,
+  secondaryPending = false,
 }: NextWorkoutCardProps) {
   return (
     <div className="mx-5 mt-1 rounded-panel bg-surface px-5 pt-[22px] pb-5">
@@ -38,6 +46,15 @@ export function NextWorkoutCard({
       >
         {pending ? "Починаємо…" : actionLabel}
       </button>
+      {secondaryLabel && onSecondary && (
+        <button
+          onClick={onSecondary}
+          disabled={secondaryPending || pending}
+          className="mt-2 h-12 w-full rounded-card text-label font-semibold text-dim transition-colors hover:text-text active:text-text disabled:pointer-events-none disabled:opacity-50"
+        >
+          {secondaryPending ? "Завершуємо…" : secondaryLabel}
+        </button>
+      )}
       {error && <p className="mt-3 text-meta text-warn">{error}</p>}
     </div>
   );

@@ -13,6 +13,7 @@ import {
   isNotNull,
   isNull,
   ne,
+  notExists,
 } from 'drizzle-orm';
 import type { JwtPayload } from '../auth/types/jwt-payload.js';
 import { DRIZZLE, type Db } from '../db/db.module.js';
@@ -205,17 +206,40 @@ export class WorkoutsService {
       .orderBy(asc(dayExercises.position));
   }
 
+  // Завершення. Тренування без жодного підходу не закривається, а
+  // видаляється: випадкове «Почати» не має лишати в історії пустий запис.
+  //
+  // Кожна гілка — один оператор з усіма умовами всередині WHERE, а не
+  // «спершу перевірити, потім змінити»: так між перевіркою «підходів нема»
+  // і видаленням не може проскочити підхід, який каскад знищив би разом
+  // з тренуванням
   async finish(user: JwtPayload, id: string) {
+    const isMineAndRunning = and(
+      eq(workouts.id, id),
+      eq(workouts.userId, user.sub),
+      isNull(workouts.finishedAt),
+    );
+
+    const [deleted] = await this.db
+      .delete(workouts)
+      .where(
+        and(
+          isMineAndRunning,
+          notExists(
+            this.db
+              .select({ id: workoutSets.id })
+              .from(workoutSets)
+              .where(eq(workoutSets.workoutId, workouts.id)),
+          ),
+        ),
+      )
+      .returning({ id: workouts.id });
+    if (deleted) return;
+
     const [finished] = await this.db
       .update(workouts)
       .set({ finishedAt: new Date() })
-      .where(
-        and(
-          eq(workouts.id, id),
-          eq(workouts.userId, user.sub),
-          isNull(workouts.finishedAt),
-        ),
-      )
+      .where(isMineAndRunning)
       .returning({ id: workouts.id });
 
     if (!finished) throw new NotFoundException();
