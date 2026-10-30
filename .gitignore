@@ -21,3 +21,4 @@ coverage/
 .playwright-mcp/
 .claude/*
 .agents/*
+.worktrees/
